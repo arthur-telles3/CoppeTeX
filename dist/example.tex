@@ -26,7 +26,8 @@
 %%   Grave accent  \`     Left brace    \{     Vertical bar  \|
 %%   Right brace   \}     Tilde         \~}
 %%
-\documentclass[dsc,numbers]{coppe}
+% useful link: https://apgita.org.br/academico/teses-e-latex/
+\documentclass[msc,numbers,english]{coppe} % maybe mscexam?
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
 
@@ -34,20 +35,20 @@
 \makeloabbreviations
 
 \begin{document}
-  \title{T\'itulo da Tese}
-  \foreigntitle{Thesis Title}
-  \author{Nome do Autor}{Sobrenome}
-  \advisor{Prof.}{Nome do Primeiro Orientador}{Sobrenome}{D.Sc.}
-  \advisor{Prof.}{Nome do Segundo Orientador}{Sobrenome}{Ph.D.}
-  \advisor{Prof.}{Nome do Terceiro Orientador}{Sobrenome}{D.Sc.}
+  \title{Tradução de linguagem automática em português brasileiro através de redes neurais em domínios de baixo recurso}
+  \foreigntitle{Tackling low resource neural machine translation applied to Brazilian Portuguese}
+  \author{Arthur}{Telles Estrella}
+  \advisor{Prof.}{João}{Baptista de Oliveira e Souza Filho}{D.Sc.}
+  % \advisor{Prof.}{Nome do Segundo Orientador}{Sobrenome}{Ph.D.}
+  % \advisor{Prof.}{Nome do Terceiro Orientador}{Sobrenome}{D.Sc.}
 
   \examiner{Prof.}{Nome do Primeiro Examinador Sobrenome}{D.Sc.}
   \examiner{Prof.}{Nome do Segundo Examinador Sobrenome}{Ph.D.}
   \examiner{Prof.}{Nome do Terceiro Examinador Sobrenome}{D.Sc.}
   \examiner{Prof.}{Nome do Quarto Examinador Sobrenome}{Ph.D.}
   \examiner{Prof.}{Nome do Quinto Examinador Sobrenome}{Ph.D.}
-  \department{PEC}
-  \date{02}{2011}
+  \department{PEE}
+  \date{02}{2021}
 
   \keyword{Primeira palavra-chave}
   \keyword{Segunda palavra-chave}
@@ -64,24 +65,134 @@
 
   \begin{abstract}
 
-  Apresenta-se, nesta tese, ...
+  Apresenta-se nesta dissertação um estudo dedicado a lidar com a tarefa de tradução usando redes neurais, em condições de pouca disponibilidade de dados e com apenas uma GPU, com foco específico para o português-inglês. 
+  Será avaliado o efeito prático de técnicas disponíveis na literatura que possuem algum potencial de melhorar a performance nesse contexto, como subword embeddings, pretrained word embeddings e back translation, e como elas  impactam qualitativamente no desempenho em frases de diferentes níveis de complexidade.
+  Essas técnicas terão seus prós e contras avaliados e discutidos, utilizando as principais arquiteturas utilizadas na literatura, redes neurais recorrentes e baseadas em transformers.
+  (avaliar isso) O melhor modelo desenvolvido é capaz de atingir x\% de score BLEU e y de perplexidade no conjunto de teste do dataset xpto.
 
   \end{abstract}
 
   \begin{foreignabstract}
 
-  In this work, we present ...
+  In this work, a dedicated analysis is executed to get best practices on how to tackle neural machine translation under low data availability and using a single GPU, focusing specifically on the Portuguese-English pair. 
+  Techniques in the literature that can potentially boost the performance under this context will be evaluated, such as subword embeddings, pretrained word embeddings and back translation, and the qualitative impact of them is presented in sentences with a complexity drill down.
+  The tradeoffs of these techniques are discussed, contemplating the main architectures used in the literature, neural recurrent models and transformer-based ones.
+  (evaluate this) The best model built is capable of reaching x\% BLEU score and y Perplexity in the test set for the xpto Portuguese dataset.
 
   \end{foreignabstract}
 
   \tableofcontents
   \listoffigures
   \listoftables
+  %% --- UNDERSTAND HOW TO USE THIS ---
   \printlosymbols
   \printloabbreviations
-
+  %% ----------------------------------
   \mainmatter
-  \chapter{Introdu{\c c}\~ao}
+  \chapter{Introduction}
+  \section{The reenactment of machine translation}
+  
+  The machine translation is a research field that until 2013 has mainly invested in statistical based models, but the breakthrough promoted by sequence to sequence algorithms followed by the use of transformer models has significantly changed the focus of the field. Before neural networks, machine translation systems were rules-based, syntax-based, phrase-based or a blend between more than one of these techniques. Probabilistic models were used and considered state of the art just before the first sequence to sequence paper appeared. The increase in performance promoted by the sequence to sequence and transformers quickly received some attention, and soon other variants were developed.
+  
+  Despite being constrained by computational power in many stages since its beginning, one of the most relevant contributions to the translation task were the transformers, which made possible to perform the computation in a truly parallel schema. With this new architecture, the operations performed during training are not totally dependent, allowing them to become parallelizable in the GPU. By removing the constraint of some operations having to wait for others to finish, NMT models were enabled to scale and reach even higher quality translations.
+  
+  In 3 years NMT became the dominant approach to machine translation, inducing a major transition from statistical to neural models. The broad set of parameters and architectures already present in the literature that could be used to boost translation quality, along with the promising results being presented at the time reached the interest of researchers to explore this variant.
+
+  \section{Challenges for the Portuguese language}
+
+  Traditionally, the machine translation datasets and conferences usually focus on a subset of languages from countries that are actively investing on NLP, which biases and narrows the potential that the algorithms have towards a specific domain. Unfortunately, Portuguese is a language that does not ostentate supervised translation data in diversity and quantity, an issue that increases the struggle to build a model that can successfully translate it to other languages. Another obstacle is that Portuguese has european, brazilian and african variants, this provides a challenge for a model since generalization is harder if several sentences with different dialects can have the same meaning.
+  
+  The branch of NMT inside natural language processing is also a field with few papers and academic works among Brazilian universities, this can be partially explained by the challenge that this environment presents: most models require cutting edge GPUs and usually only one GPU is not enough for medium sized model on an average WMT competition dataset. The scarcity of these resources for research purposes require students to innovate in a limited domain and search for cloud solutions without sponsorship.
+
+  \section{Chapter Organization}
+
+  An explanation of sequence to sequence algorithms and an overview of the most relevant papers regarding NMT and their contributions is given at chapter 2.
+  
+  In chapter 3, the final model proposed in this work is built piece by piece, where all parameters regarding tuning NMT algorithms are mentioned and the effect of choosing one technique versus another is discussed. This is done via a data-driven approach, the winner techniques are chosen based on BLEU and validation Perplexity results. This chapter leverages the final model potential, finish with a set of most promising parameters to tune.
+
+  After reaching a set of potential hyperparameters, chapter 4 contains the final models variants to be tested. These variants are trained on the Portuguese dataset and also on another WMT dataset for comparison purposes.
+
+  Finally, in chapter 5 this work is concluded and further improvements and study directions are outlined.
+
+  \chapter{Neural networks}
+
+  The application of neural networks has been extended to several domains, at first they were applied to numerical and categorical data, but quickly researchers were able to solve image processing and natural language tasks with some variations on the algorithms. For a long time, this paradigm hasn't seen any applications to solve translation tasks, until Cho et al. \cite{learning-phrase-representations} who came up with a RNN Encoder-Decoder architecture.
+
+  In order to better understand the tradeoffs and capabilities of this technique, we must first have a clear picture of how a recurrent neuron works, which is going to be detailed in the next section.
+
+  \section{Recurrent neural networks}
+
+  Although being created at the 1980s, recurrent neurons have gained popularity decades later after proving their efficiency through a variety of applications in deep learning. 
+  
+  While feedforward neurons usually struggle to understand relationships in sequential data, the computation behind RNNs depend not only on the current input but also on the current state of the network, which stores information from the past. This turns recurrent neurons into a potential fit to a problem were sequential data is presented. 
+  
+  A vanilla recurrent neuron can be defined by 2 operations, both are updated at each time step t. The first operation maps the input and previous state into the current state, and can be expressed as follows:
+
+  \begin{equation}
+  h^{(t)} = g(W_{xh}^{T} x^{t} + W_{hh}^{T} h^{(t-1)} + b_h)
+  \end{equation}
+
+  Where $h^{(t)}$ is the input state at time step t. The second operation maps the current state into the output, and is given by the equation below:
+
+  \begin{equation}
+  y^{(t)} = W_{hy}^{T} h^{t} + b_y
+  \end{equation}
+
+  *** Colocar figurinha dos estados ***
+
+  For further reading on how RNNs work and the motivation behind the equations implemented, the reader is referred to \citet{DBLP:journals/corr/abs-1808-03314}.
+
+  References: https://arxiv.org/pdf/1808.03314.pdf, https://medium.com/@purnasaigudikandula/recurrent-neural-networks-and-lstm-explained-7f51c7f6bbb9, https://classroom.google.com/u/1/c/MTgxMzk1MTY5MTQ4/m/MTg4MTA1Njk5MDIw/details, https://builtin.com/data-science/recurrent-neural-networks-and-lstm 
+
+  \subsection{Backpropagation through time}
+
+  Bla 
+
+  \subsection{Vanishing and Exploding Gradients}
+
+  Bla
+
+  \subsection{LSTM}
+
+  Bla
+
+  \subsection{GRU}
+
+  Bla
+
+  \section{RNN encoder-decoder architecture}
+
+  In their approach, one RNN reads each symbol of an input sequence x sequentially and encodes this sequence of symbols into a fixed-length vector representation $c$, the hidden state. The other decodes this representation into another sequence of symbols by predicting the next symbol $y_{t}$ given the hidden state $h_{{t}}$. The equation for the decoder's hidden state is given below.
+
+  \begin{equation}
+  h_{{t}} = f(h_{t-1}, y_{t-1}, c)
+  \end{equation}
+
+  Bla
+
+  \section{Align and Translate}
+
+  Bla
+
+  \section{Attention is all you need}
+
+  Bla 
+
+  \section{Recent iterations on seq2seq algorithms}
+
+  Talk briefly of GPT, BERT and other variations, including using word embeddings 
+
+  \subsection{Pretrained word embeddings for NMT}
+
+  Talk of using Glove, word2vec, fasttext and others in NMT 
+  
+  ------- (should I describe them technically?) -------
+
+  \chapter{Proposed model}
+
+  ------- (step by step explanation of the hyperparameters explored, results and building piece on piece until we reach out best model) -------
+
+  a
 
   Segundo a norma de formata{\c c}\~ao de teses e disserta{\c c}\~oes do
   Instituto Alberto Luiz Coimbra de P\'os-gradua{\c c}\~ao e Pesquisa de
@@ -105,8 +216,6 @@
   of a means whereby the degree of corrosion could be quantified with neutron
   radiographic data. \cite{article-example}
   \end{longquote}
-
-  \chapter{Revis\~ao Bibliogr\'afica}
 
   Para ilustrar a completa ades\~ao ao estilo de cita{\c c}\~oes e listagem de
   refer\^encias bibliogr\'aficas, a Tabela~\ref{tab:citation} apresenta cita{\c
@@ -140,9 +249,15 @@
   \end{tabular}}
   \end{table}
 
-  \chapter{M\'etodo Proposto}
-  \chapter{Resultados e Discuss\~oes}
-  \chapter{Conclus\~oes}
+  \chapter{Results}
+  
+  \section{Datasets}
+  
+  Apart from the issues outlined, there is a collaborative dataset created and maintained by the Tatoeba Project that contains several English-Portuguese sentence pairs, that is available on the internet. The project contains datasets with several bilingual sentence pairs, considered to match an intermediate english level and translated from English to several other languages, including Portuguese. The Portuguese dataset contains 165k sentences, with 993k words and 21k unique words. It was built by native speakers and has been reviewed by a linguistic expert.
+
+  When compared to the average WMT datasets, it is not as large and the vocabulary size is a bit smaller, so it is considered medium level dataset to machine translation, but it suffices our needs.
+  
+  \chapter{Conclusions}
 
   \backmatter
   \bibliographystyle{coppe-unsrt}
