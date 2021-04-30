@@ -30,6 +30,7 @@
 \documentclass[msc,numbers,english]{coppe} % maybe mscexam?
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
+\usepackage{xcolor}
 
 \makelosymbols
 \makeloabbreviations
@@ -104,97 +105,92 @@
   
   The branch of NMT inside natural language processing is also a field with few papers and academic works among Brazilian universities, this can be partially explained by the challenge that this environment presents: most models require cutting edge GPUs and usually only one GPU is not enough for medium sized model on an average WMT competition dataset. The scarcity of these resources for research purposes require students to innovate in a limited domain and search for cloud solutions without sponsorship.
   
+  Finally, Portuguese is a complex language that uses accents which can change their meaning (i.e. "e" and "é"), has different pronoun organizations (i.e. "realizar-se-á" equals "se realizará") and irregular verb inflections (i.e. the "pôr" and "haver" verbs) so text preprocessing and tokenization plays an important role. Disregarding these details by applying some generic preprocessing steps that eliminates accents for instance can lead to worse model performance. On the other hand, having some domain knowledge and apply this to the NLP pipeline can help the model better translate or classify, depending on the desired task.
+  
   \section{Contributions of this dissertation}
   
   The generic contribution of this work is the evaluation of a set of techniques available in the literature for NMT that can help dealing with low resource domains, although being applied to Portuguese they can be generalized to other languages. There is also a specialized contribution under a qualitative domain, as performance gains provided by these techniques are evaluated in a subset of sentences that contain a complexity drill down, enabling the reader to have a deeper understanding of their effects on the Portuguese language.
 
   \section{Chapter Organization}
 
-  (a ideia final para a dissertação do chapter 2 é falar de arquitetura e revisão teórica/bibliográfica de fundamentos da arquitetura, depois no 3 mostrar restrições que acontecem em low resource domains e suas consequencias, com revisão bibliográfica das técnicas disponíveis que podem ajudar nesse contexto e a motivação das escolhas feitas)
+  \textcolor{red}{(a ideia final para a dissertação do chapter 2 é falar de arquitetura e revisão teórica/bibliográfica de fundamentos da arquitetura, depois no 3 mostrar restrições que acontecem em low resource domains e suas consequencias, com revisão bibliográfica das técnicas disponíveis que podem ajudar nesse contexto e a motivação das escolhas feitas)}
 
-  An explanation of the main NMT architectures along with techniques available in the literature that can potentially help in low resource domains is given in chapter 2.
+  An explanation of the transformer and recurrent neural network architectures and how researchers iterated on them to become state of the art is given in chapter 2.
   
-  In chapter 3 contraints that arise in low resource domains and techniques that appeared in the literature to solve those 
-  Finally, in chapter 5 this work is concluded and further improvements and study directions are outlined.
+  In chapter 3 constraints that arise in low resource domains and a review of techniques that can potentially help to reduce those issues are presented.
   
-  Estritamente necessário:
-  - ct
-
-  \chapter{Neural networks}
-
-  The application of neural networks has been extended to several domains, at first they were applied to numerical and categorical data, but quickly researchers were able to solve image processing and natural language tasks with some variations on the algorithms. For a long time, this paradigm hasn't seen any applications to solve translation tasks, until Cho et al. \cite{learning-phrase-representations} who came up with a RNN Encoder-Decoder architecture.
-
-  In order to better understand the tradeoffs and capabilities of this technique, we must first have a clear picture of how a recurrent neuron works, which is going to be detailed in the next section.
-
-  \section{Recurrent neural networks}
-
-  Although being created at the 1980s, recurrent neurons have gained popularity decades later after proving their efficiency through a variety of applications in deep learning. 
+  The datasets chosen are presented in chapter 4, where we also describe implementation details, how hyperparameters were iterated on to fit in a single machine GPU and results of the experiments, which are measured in terms of validation perplexity, BLEU and \textcolor{red}{TER(?)(<to be defined>)}. A qualitative discussion regarding human and model translations in different complexity levels is also performed.
   
-  While feedforward neurons usually struggle to understand relationships in sequential data, the computation behind RNNs depend not only on the current input but also on the current state of the network, which stores information from the past. This turns recurrent neurons into a potential fit to a problem were sequential data is presented. 
+  \textcolor{red}{(Finally, in chapter 5 this work is concluded and further improvements and study directions are outlined.)}
   
-  A vanilla recurrent neuron can be defined by 2 operations, both are updated at each time step t. The first operation maps the input and previous state into the current state, and can be expressed as follows:
+  Finally, in chapter 5, next steps to conclude this work in the following months are presented
 
-  \begin{equation}
-  h^{(t)} = g(W_{xh}^{T} x^{t} + W_{hh}^{T} h^{(t-1)} + b_h)
-  \end{equation}
+  \chapter{Neural networks and machine translation}
 
-  Where $h^{(t)}$ is the input state at time step t. The second operation maps the current state into the output, and is given by the equation below:
+  Since their ideation in 1958, neural networks have seen peaks and valleys of research focus in many different artificial intelligence fields. After going out of the tar pit in the 1980s with feedforward and recurrent variants, receiving convolutional and LSTM variants in 1990s, they started to leverage promising results when applied to numerical and categorical data. Specially after 2013 neural networks were growing at an unseen rate, applications to image processing and natural language processing were massively explored and soon consolidated themselves as state of the art algorithms. 
+  
+  For a long time, this paradigm hasn't seen any applications to solve translation tasks, until 2013 when \citet{cho-etal-2014-learning} came up with a RNN Encoder-Decoder architecture proposal. The focus of the scientific community at the time that was on statistical models, but as the application of recurrent networks to this domain gained maturity, the papers gradually started to switch their focus.
+  
+  \section{Recurrent neural networks as machine translators}
 
-  \begin{equation}
-  y^{(t)} = W_{hy}^{T} h^{t} + b_y
-  \end{equation}
-
-  *** Colocar figurinha dos estados ***
-
-  For further reading on how RNNs work and the motivation behind the equations implemented, the reader is referred to \citet{DBLP:journals/corr/abs-1808-03314}.
-
-  References: https://arxiv.org/pdf/1808.03314.pdf, https://medium.com/@purnasaigudikandula/recurrent-neural-networks-and-lstm-explained-7f51c7f6bbb9, https://classroom.google.com/u/1/c/MTgxMzk1MTY5MTQ4/m/MTg4MTA1Njk5MDIw/details, https://builtin.com/data-science/recurrent-neural-networks-and-lstm 
-
-  \subsection{Backpropagation through time}
-
-  Bla 
-
-  \subsection{Vanishing and Exploding Gradients}
-
-  Bla
-
-  \subsection{LSTM}
-
-  Bla
-
-  \subsection{GRU}
-
-  Bla
-
-  \section{RNN encoder-decoder architecture}
-
-  In their approach, one RNN reads each symbol of an input sequence x sequentially and encodes this sequence of symbols into a fixed-length vector representation $c$, the hidden state. The other decodes this representation into another sequence of symbols by predicting the next symbol $y_{t}$ given the hidden state $h_{{t}}$. The equation for the decoder's hidden state is given below.
+  In Cho et al's approach, one RNN reads each symbol of an input sequence x sequentially and encodes this sequence of symbols into a fixed-length vector representation $c$, the hidden state. The other decodes this representation into another sequence of symbols by predicting the next symbol $y_{t}$ given the hidden state $h_{{t}}$. The equation for the decoder's hidden state at time $t$ is given below.
 
   \begin{equation}
   h_{{t}} = f(h_{t-1}, y_{t-1}, c)
   \end{equation}
-
-  Bla
-
-  \section{Align and Translate}
-
-  Bla
-
-  \section{Attention is all you need}
-
-  Bla 
-
-  \section{Recent iterations on seq2seq algorithms}
-
-  Talk briefly of GPT, BERT and other variations, including using word embeddings 
-
-  \subsection{Pretrained word embeddings for NMT}
-
-  Talk of using Glove, word2vec, fasttext and others in NMT 
   
-  ------- (should I describe them technically?) -------
+  In this setup, the encoder and decoder of the proposed model are jointly trained to maximize the conditional log-likelihood of a target sequence given a source sequence. It has the drawback of losing some of the information provided by the encoder, since only the hidden state is used, and the RNN output is discarded. Another issue is that the neural network has to compress all the necessary information of a source sentence into a fixed-length vector, which provides a challenge to deal with long sentences.
+  
+  Massive Exploration of Neural Machine Translation Architectures \citet{britz2017massive}
 
-  \chapter{Proposed model}
+  \subsection{Bahdanau's attention mechanism}
+
+  NMT by jointly learning to align and translate, comment that it has a new sequence proposal for vectorization
+  
+  \citet{bahdanau2016neural}
+  
+  \subsection{Attention variants for sequence to sequence learning}
+  
+  Effective Approaches to Attention-based Neural Machine Translation \citet{luong-etal-2015-effective}
+  
+  RNN with Doubly-Attentive Decoder \citet{calixto-etal-2017-doubly}
+
+  \section{Transformer-based models}
+
+  Attention is all you need \citet{DBLP:journals/corr/VaswaniSPUJGKP17}
+
+  \subsection{Have transformers outperformed RNNs?}
+  
+  A Comparison of Transformer and Recurrent Neural Networks on Multilingual
+               Neural Machine Translation
+  \citet{DBLP:journals/corr/abs-1806-06957}
+
+  Talk briefly of GPT, maybe bert, and other transformer variations, including using word embeddings 
+  
+  GPT-3 \citet{brown2020language}
+  
+  DeFINE: DEep Factorized INput Word Embeddings for Neural Sequence \citet{DBLP:journals/corr/abs-1911-12385}
+  
+  DeLighT: Deep and Light-weight Transformer \citet{mehta2021delight}
+  
+  \subsection{training techniques can also help}
+  
+  Minimum Risk Training for Neural Machine Translation \citet{shen-etal-2016-minimum}
+
+  \chapter{Low resource context}
+  
+
+  \section{low resource techniques}
+  
+  Transfer Learning for Low-Resource Neural Machine Translation \citet{zoph-etal-2016-transfer}
+  
+  Revisiting Low-Resource Neural Machine Translation: A Case Study \citet{sennrich-zhang-2019-revisiting}
+  
+  Talk of using Glove, word2vec, fasttext and others
+  
+ 
+
+  \chapter{Results}
 
   ------- (step by step explanation of the hyperparameters explored, results and building piece on piece until we reach out best model) -------
 
@@ -220,7 +216,7 @@
   included the determination of the effect of object thickness on image quality,
   the defining of minimum levels of detectability and a preliminary investigation
   of a means whereby the degree of corrosion could be quantified with neutron
-  radiographic data. \cite{article-example}
+  radiographic data.
   \end{longquote}
 
   Para ilustrar a completa ades\~ao ao estilo de cita{\c c}\~oes e listagem de
