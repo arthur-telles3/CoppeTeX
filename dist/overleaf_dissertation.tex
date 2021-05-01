@@ -117,7 +117,7 @@
 
   An explanation of the transformer and recurrent neural network architectures and how researchers iterated on them to become state of the art is given in chapter 2.
   
-  In chapter 3 constraints that arise in low resource domains and a review of techniques that can potentially help to reduce those issues are presented.
+  In chapter 3 constraints that arise in low resource domains and a review of techniques that can potentially help to reduce those issues are presented, along with the rationale behind our choices.
   
   The datasets chosen are presented in chapter 4, where we also describe implementation details, how hyperparameters were iterated on to fit in a single machine GPU and results of the experiments, which are measured in terms of validation perplexity, BLEU and \textcolor{red}{TER(?)(<to be defined>)}. A qualitative discussion regarding human and model translations in different complexity levels is also performed.
   
@@ -128,6 +128,8 @@
   \chapter{Neural networks and machine translation}
 
   Since their ideation in 1958, neural networks have seen peaks and valleys of research focus in many different artificial intelligence fields. After going out of the tar pit in the 1980s with feedforward and recurrent variants, receiving convolutional and LSTM variants in 1990s, they started to leverage promising results when applied to numerical and categorical data. Specially after 2013 neural networks were growing at an unseen rate, applications to image processing and natural language processing were massively explored and soon consolidated themselves as state of the art algorithms. 
+  
+  Among the first relevant contributions coming from neural networks to the NLP domain was \citet{mikolov2013efficient}, that managed to execute the task of efficiently adjusting word vectors in a N dimensional space using a 2 layer shallow neural network. This was accomplished by adjusting word vectors based on the likelihood of a word to occur given a context or vice versa.
   
   For a long time, this paradigm hasn't seen any applications to solve translation tasks, until 2013 when \citet{cho-etal-2014-learning} came up with a RNN Encoder-Decoder architecture proposal. The focus of the scientific community at the time that was on statistical models, but as the application of recurrent networks to this domain gained maturity, the papers gradually started to switch their focus.
   
@@ -140,31 +142,57 @@
   \end{equation}
   
   In this setup, the encoder and decoder of the proposed model are jointly trained to maximize the conditional log-likelihood of a target sequence given a source sequence. It has the drawback of losing some of the information provided by the encoder, since only the hidden state is used, and the RNN output is discarded. Another issue is that the neural network has to compress all the necessary information of a source sentence into a fixed-length vector, which provides a challenge to deal with long sentences.
-  
-  Massive Exploration of Neural Machine Translation Architectures \citet{britz2017massive}
 
   \subsection{Bahdanau's attention mechanism}
 
-  NMT by jointly learning to align and translate, comment that it has a new sequence proposal for vectorization
+  To address the fixed-length and "information compression" loss issues identified in the previous implementation, the authors of the first paper proposed another way of connecting the encoder to the decoder \citet{bahdanau2016neural}, where the former encodes the input sequence into a sequence of vectors and extracts a subset of these vectors (not a single fixed-length one), while decoding the translation.
   
-  \citet{bahdanau2016neural}
+  The encoder output (also called context vector) $c_{t}$ is now a variable length vector that represents annotations and comprises a mechanism that extract information from different parts of the input sentence. Each annotation receives a weight and the final vector built can be seen as a weighted average of the inputs, where these weights represent a way to distribute attention. 
   
-  \subsection{Attention variants for sequence to sequence learning}
+  This attention mechanism can be also interpreted as an alignment model, that directly computes a soft alignment, which allows the gradient of the cost function to be backpropagated through. This gradient can be used to train the alignment model as well as the whole translation model jointly, and this new information flow partially explains the performance gains reported.
   
-  Effective Approaches to Attention-based Neural Machine Translation \citet{luong-etal-2015-effective}
+  Another improvement that contributed to the success of this approach is the use of bidirectional RNNs to encode the input sequence, the vector that flows from the encoder to the decoder now contains a representation not only of the preceding words but also of the following words, allowing a more efficient attention weight distribution. Despite these improvements, the attention mechanism is still rather simple and does not accomplish the importance attribution task as well as its succeeding variants, implemented in other papers later on.
   
-  RNN with Doubly-Attentive Decoder \citet{calixto-etal-2017-doubly}
+  \textcolor{red}{(equations from the paper will be put in here later to matematically explain how attention is distributed)}
+  
+  An interesting work that explores the potential the previous presented RNN models have is executed by \citet{britz2017massive}, where using \cite{cho-etal-2014-learning} as a base model, several hyperparameters like embedding size, RNN cell variant (LSTM and GRU), encoder and decoder depth, unidirectional vs. bidirectional RNN encoders, attention mechanism and beam search parameters are iterated and findings about the best setups are reported. One of the claims of this work is that careful hyperparamter tuning can yield better results than many others that explored architecture variations.
+  
+  Among interesting results reported on \citet{britz2017massive} are that larger embeddings consistently outperforms smaller ones by a thin margin, LSTM cells consistently outperformes GRU cells, deeper decoders tend to lead to performance increases, additive attention achieves slightly better results than multiplicative and beam searches tuned to a "sweet spot" can increase model performance up to 5\%. Some of these conclusions are incorporated into our hyperparameters also, but given the low resource domain constraints and other features to iterate, our hyperparameter search is a bit narrower.
 
   \section{Transformer-based models}
-
-  Attention is all you need \citet{DBLP:journals/corr/VaswaniSPUJGKP17}
-
-  \subsection{Have transformers outperformed RNNs?}
   
-  A Comparison of Transformer and Recurrent Neural Networks on Multilingual
-               Neural Machine Translation
-  \citet{DBLP:journals/corr/abs-1806-06957}
+  A relevant contribution to a field that at the time was mainly iterating in recurrent and convolution based neural networks for machine translation was made in 2017 by \citet{DBLP:journals/corr/VaswaniSPUJGKP17}. This new proposed family of transformer models is not constrained by the same condition as RNNs, which as a consequence of its sequential pattern, has to wait for an operation to finish to begin another one. This new approach gained traction and adherece from the community since parallelization was a strength, along with it came the potential to explore possible variations.
+  
+  In the original implementation, the encoder and the decoder contain 6 stacked transformer layers. In the encoder, each layer contains a multi-head self-attention mechanism, followed by layer normalization and a feed-forward layer. The structure in the decoder is quite similar, although an extra masked multi-head attention layer is added over the output of the encoder stack before multi-head attention. Backpropagation operates end-to-end in this architecture.
+  
+  The attention mechanism differs from previous implementations, but the goal is the same: to enable the model to distribute the influences of every input on the outputs generated. It can be described as mapping a query and a set of key-value pairs to an output, where the query (Q), keys (K) and values (V) are all vectors with dimensions defined by a hyperparameter. The original paper implements scaled dot product attention, computing dot products of the queries with all keys, then dividing by a normalizing factor $\sqrt{d_{k}}$ and passing this result into a softmax.
+  
+  \textcolor{red}{(equations from the paper will be put in here later to matematically explain attention)}
+  
+  Multi-head self-attention also plays a role on the contribution given by the authors, they claim that it is beneficial to project the matrices Q, K and V in attention h times, with different learned projections by each one of the heads. The projections of each head are concatenated and the attention weights now are adjusted to different representation subspaces at different positions, which at the beginning was thought to be consistently contributing to performance. Years later after an analysis performed by \citet{DBLP:journals/corr/abs-1905-09418}, this hypothesis was rejected. 
+  
+  The authors evaluated how the contribution of each attention head happened during the training process, and they find that only a small subset of heads are enough to sustain the transformer translation scores. They analyse the importance distribution and discover that several heads learn similar dependency mappings. By using this map as a qualitative signal of feature importance per head, they propose to prune the heads that have similar dependency maps and conclude that there is no noticeable loss in translation quality by doing this. 
+  
+  This paper raises a relevant question to the community: are deep learning works usually biased to increasing complexity and model parameters unnecessarily? Efficient models have a smaller carbon footprint and energy waste, which can lower the impact on nature, this could bring the community closer to the green AI status and increase credibility of deep learning research.
 
+  \section{Attention variants for sequence to sequence learning}
+  
+  Not only architecture related parameters can lead the transformer to better quality translations, the attention mechanism also has attracted the interest of some contributions. Despite the evidence provided that increasing the number of heads in attention mechanisms may generate redundancy, there are works that report better results going against this advice by creating multiple attention branches, where each branch is an independent multi-head attention mechanism \cite{DBLP:journals/corr/abs-2006-10270}. 
+  
+  In this paper, other techniques such as a drop branch mechanism (similar as dropout, but applied to branches) and a specific initialization recipe for each branch may have an effect on the final outcome, so it is not clear whether the benefits come from multiplying attention or from those techniques.
+  
+  Iterations on the set of words that attention sees and on the weight distribution function are among the most common variants. In the paper published by \citet{luong-etal-2015-effective}, the attention mechanism is split into 2 classes: global and local attention. The former always attends to all source words of a given sentence, while the latter only looks at a subset of words at a given time. 
+  
+  Local attention is explored with different alignments, monotonic and predictive. In the first case, they just assume that source and target sequences are roughly monotonically aligned and concatenate the current hidden state with the source hidden state. For the predictive variant, they use a gaussian distribution centered around the word to be predicted and define alignment weights based on this distribution, adjusting the variation behaviour of weights to follow a normal distribution.
+  
+  The main contributions are that attention-based models usually outperform non-attentional ones and that a small increase in performance can be observed by adding a custom weight function (gaussian-based in this case). Also, using an ensemble of attention architectures may be also effective as they claim new state of the art results by doing so, even though further details of this ensemble are not provided.
+  
+  Integrating attention mechanisms with different attention perspectives is another exploited approach, which has been followed by \citet{calixto-etal-2017-doubly} and \citet{cui-etal-2019-mixed}. In the former, a single layer feedforward network is used to compute the expected alignment between each annotation vector in both mechanisms, but this increases the amount of parameters to train the model. In the latter, the concept of forward and backward attention is introduced, where specialized masks help the transformer to model word other information in a slightly different schema of the positional encoder used in the original paper. Both mechanisms are concatenated with the standard global and local attention, although this leads to better BLEU it also increases model parameters.
+  
+  There is no evidence that iterating on the attention mechanism would provide any benefits in low resource settings, furthermore all iterations usually increase model paremeters, hence hindering our low resource scenario. This together with the fact that data augmentation and embedding techniques have better potential, no iterations were made on the traditional attention mechanism of RNNs and transformers in this work.
+  
+  \section{How far transformers can go? Which changes are the most promising?}
+  
   Talk briefly of GPT, maybe bert, and other transformer variations, including using word embeddings 
   
   GPT-3 \citet{brown2020language}
@@ -173,29 +201,62 @@
   
   DeLighT: Deep and Light-weight Transformer \citet{mehta2021delight}
   
-  \subsection{training techniques can also help}
+  \subsection{Alternative training objectives}
   
-  Minimum Risk Training for Neural Machine Translation \citet{shen-etal-2016-minimum}
+  Despite many state of the art models having reached their scores using the original maximum likelihood estimation learning objective, the work of \citet{ranzato-sequence} indicate two drawbacks of using it in NMT. First, during training NMT models are not exposed to their translation errors, this phenomenon is referred to as exposure bias. Finally, the MLE estimation is defined at word level rather than sentence level, so theoretically the optimization objective is not aligned with the final objective, which is to generate a sentence that can match a human translation. 
+  
+  With this problem in mind, they introduce Mixed Incremental Cross Entropy Reinforce (MIXER), which switches the learning objective towards sentence-level training. This algorithm tries to handle the problem of backpropagating gradients on non-differentiable metrics such as BLEU with some ideas borrowed from reinforcement learning (RL). 
+  
+  Another technique proposed by \citet{shen-etal-2016-minimum} reported results that also raised more awareness to this learning objective issue. They claim that as MIXER samples only one candidate to calculate the reward while MRT generates multiple samples, this potentially increases its capability of discrimination, pretty close to the effect of increasing beam search in a standard NMT setup.
+ 
+  Apart from the efforts put into iterating on the learning objective and benefits claimed by these papers, some side effects of switching the training objective are also diagnosed by \citet{DBLP:journals/corr/abs-1907-01752}. They point out the weakness of RL based approaches for optimization, claim that some of the increases are not fully attributed to the techniques and also discuss convergence issues of these new objectives. Given this unclear scenario of how iterating on the learning objective can lead to better translations, changing it in our work was not taken into consideration.
 
   \chapter{Low resource context}
   
 
-  \section{low resource techniques}
+  \section{low resource techniques}   
   
+  decide where to put this ----
   Transfer Learning for Low-Resource Neural Machine Translation \citet{zoph-etal-2016-transfer}
   
   Revisiting Low-Resource Neural Machine Translation: A Case Study \citet{sennrich-zhang-2019-revisiting}
+  ------------------------
+  
+  \subsection{Pretrained word embeddings}
+  
+  When and Why Are Pre-Trained Word Embeddings Useful for Neural Machine Translation? \citet{qi-etal-2018-pre} 
+  
+  Enriching Word Vectors with Subword Information (fast text) \citet{DBLP:journals/corr/BojanowskiGJM16}
+  
+  \subsection{Subword embeddings}
+  
+  BPE \citet{DBLP:journals/corr/SennrichHB15} 
+  
+  Sentence piece \citet{DBLP:journals/corr/abs-1808-06226}
+  
+  Achieving Open Vocabulary Neural Machine Translation with Hybrid Word-Character Models \citet{DBLP:journals/corr/LuongM16}
   
   Talk of using Glove, word2vec, fasttext and others
   
+  \subsection{Data Augmentation}
+  
+  Improving Neural Machine Translation Models with Monolingual Data \citet{DBLP:journals/corr/SennrichHB15a}
+  
+  Generalized Data Augmentation for Low-Resource Translation \citet{DBLP:journals/corr/abs-1906-03785}
  
-
   \chapter{Results}
+  
+  \section{Methodology}
+  
+  \section{Qualitative evaluation}
+  
+  \subsection{Translation metrics with complexity drill down}
 
-  ------- (step by step explanation of the hyperparameters explored, results and building piece on piece until we reach out best model) -------
-
-  a
-
+  \chapter{Next steps for this dissertation}
+  
+  Preliminary deadline at 10/09/2021
+  
+  
   Segundo a norma de formata{\c c}\~ao de teses e disserta{\c c}\~oes do
   Instituto Alberto Luiz Coimbra de P\'os-gradua{\c c}\~ao e Pesquisa de
   Engenharia (COPPE), toda abreviatura deve ser definida antes de
