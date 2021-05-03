@@ -31,6 +31,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
 \usepackage{xcolor}
+\usepackage{array}
 
 \makelosymbols
 \makeloabbreviations
@@ -223,9 +224,9 @@
   
   Given the goal of analysing translation quality with different sentence complexity levels, portuguese datasets were carefully chosen to match our GPU and model complexity constraints. Regarding GPU memory, from highest to lowest, the 3 hyperparameters that impact it most are batch size, hidden size and embedding size. Low batch size can significantly increase the time to train and hinder the training process, since the model sees less examples at each iteration. We had to determine a hard cutoff where if a model cannot be trained with at least that batch size, it will be discarded. That batch size is 64.
   
-  Based on experimental iterations, some datasets such as europarl \cite{philipp-koehn-europarl} which contain 1.9 million sentences, even when reduced to more than 10 times its original size, still could not fit into a single Nvidia K80, T4 or P100 GPU, within our batch size threshold of 64. Attempts to do this using a traditional transformer from \citet{DBLP:journals/corr/VaswaniSPUJGKP17} and a RNN model based on \citet{bahdanau2016neural} with 25\% of the original embedding and hidden layer sizes both failed. As europarl is a domain specific dataset with long sentences, reducing its size results in expecting the model to learn long and complex sentences with less data, which is unfeasible. Therefore, this dataset was discarded from our list.
+  Based on experimental iterations, some datasets such as europarl \cite{philipp-koehn-europarl} which contain 1.9 million sentences, even when reduced to more than 10 times its original size, still could not fit into a single Nvidia Tesla K80, T4 or P100 GPU, within our batch size threshold of 64. Attempts to do this using a traditional transformer from \citet{DBLP:journals/corr/VaswaniSPUJGKP17} and a RNN model based on \citet{bahdanau2016neural} with 25\% of the original embedding and hidden layer sizes both failed. As europarl is a domain specific dataset with long sentences, reducing its size results in expecting the model to learn long and complex sentences with less data, which is unfeasible. Therefore, this dataset was discarded from our list.
   
-  Another publicly available portuguese dataset that consists of TED talks \cite{cettolo-ted-talks} represented a relevant addition to the experiments performed in this work, as it easily fitted our goals. This dataset has some nice properties, it contains mixed domains since the subject of talks can vary a lot, sentences range from easy to high complexity and it has about 220k sentences (after filtering common XML tags) for the training set, which is considered to be medium sized. In our experiments, the first 1295 talks out of 1938 in the original file were selected for the training set, the following ones were discarded. This results in a training set with 169k sentences, test with 11.4k sentences and dev 4.15k. As this dataset worked in our setup with the previously mentioned models and above our minimum batch size, it is included in the experiments performed.
+  Another publicly available portuguese dataset that consists of TED talks \cite{cettolo-ted-talks} represented a relevant addition to the experiments performed in this work, as it easily fitted our goals. This dataset has some nice properties, it contains mixed domains since the subject of talks can vary a lot, sentences range from easy to high complexity and it has about 220k sentences (after filtering common XML tags) for the training set, which is considered to be medium sized. As this dataset worked in our setup with the previously mentioned models and above our minimum batch size, it is included in the experiments performed.
   
   \textcolor{red}{1. seria legal disponibilizar uma replica do dataset TED talks, ou pelo menos quais linhas foram usadas do dataset original} \textcolor{red}{2. deveria colocar a métrica de palavras totais e palavras unicas pro dataset de ted talks?}
   
@@ -275,11 +276,13 @@
   
   \section{Methodology}
   
-  Embeddings such as \citet{pennington-etal-2014-glove} and \cite{DBLP:journals/corr/BojanowskiGJM16} were used in this work, the former was chosen with the goal of benefiting from global statistic features of word and the latter because of the positive effect of subword units in addressing open vocabulary. Both embeddings were trained in a large portuguese monolingual dataset and made available by \citet{DBLP:journals/corr/abs-1708-06025}. 
+  On the experiments made, embeddings such as \citet{pennington-etal-2014-glove} and \cite{DBLP:journals/corr/BojanowskiGJM16} were used, the former was chosen with the goal of benefiting from global statistic features of word and the latter because of the positive effect of subword units in addressing open vocabulary. Both embeddings were trained in a large portuguese monolingual dataset and made available by \citet{DBLP:journals/corr/abs-1708-06025}. 
   
   The preprocessing tokenization pipeline applied by them is the same used in our experiments. In summary, numbers, emails and URLs are replaced by their respective tokens, punctuations are reduced to a single character when they occur more than once, some html formatting is removed and the text is converted to lowercase. The experiments were conducted using Python, Gensim was the library used to deal with word embeddings, sacrebleu \cite{post-2018-call} is the implementation used for calculating BLEU score and language specific Spacy tokenizers were also used.
   
-  The tatoeba dataset, was split into train, test and validation, with the test set having 10\% of the original dataset. The remaining data was split into train and validation sets, with 90\% and 10\% each.
+  The tatoeba dataset, was split into train, test and validation, with the test set having 10\% of the original dataset. The remaining data was split into train and validation sets, with 90\% and 10\% each. In order to reduce the size to fit in GPU memory, in TED talks dataset the first 1295 talks out of 1938 in the original file were selected for the training set, and the following ones were discarded. This results in a training set with 169k sentences, test with 11.4k sentences and dev 4.15k.
+  
+  The neural networks were trained from scratch on NVIDIA Tesla K80 and T4 GPUs, the metrics used to monitor the training progress were perplexity and loss, for both training and validation sets. Perplexity measures the inverse of the geometric average probability attributed to an occurring word, the lower it is the better the model is performing. During training, a new model is saved each time the best validation perplexity is achieved. If the validation perplexity doesn't improve for 10 epochs, the process is halted, meaning it reached convergence. This rule was applied to all the models.
   
   \section{Qualitative evaluation}
   
@@ -290,11 +293,14 @@
   \label{tab:citation}
   \centering
   {\footnotesize
-  \begin{tabular}{|c|c|c|c|}
+  \begin{tabular}{| p{4cm} | p{1cm} | p{4cm} | p{4cm} | p{1cm}|}
     \hline
-    Hipothesis & \verb|Complexity| & \verb|Reference| & \verb|Translation|\\
+    Hipothesis & \verb|Complexity| & \verb|Reference| & \verb|Translation| & \verb|BLEU|\\
     \hline
-    Eu voei no Força Aérea 2 por oito anos. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|I flew in Air Force Two for eight years.|\\
+    Eu voei no Força Aérea 2 por oito anos. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|I flew in Air Force Two for eight years.| & \verb|0.8|\\
+    Não conseguimos produzir algum tipo de combustível mais limpo para cozinhar?. & \verb|B1| & \verb|Can't we make cleaner burning cooking fuels?| & \verb|Can we not make cleaner cooking burn fuels?| & \verb|0.6|\\
+    Então isso é o que eles fazem. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|And so this is what they do.| & \verb|0.7|\\
+    Mas é quase como se o corpo tivesse originado essa resposta engenhosa mas não conseguisse de fato controlá-la. & \verb|B2| & \verb|But it's almost as if the body has originated this ingenious response, but can't quite control it.| & \verb|But it's almost as if the body has originated this ingenious response, but can't quite control it.| & \verb|0.5|\\
     % Artigo & \cite{article-example} & \citet{article-example}\\
     % Relat\'orio & \cite{techreport-example} & \citet{techreport-example}\\
     % Relat\'orio & \cite{techreport-exampleIn} & \citet{techreport-exampleIn}\\
