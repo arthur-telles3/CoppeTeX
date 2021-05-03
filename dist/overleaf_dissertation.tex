@@ -67,7 +67,7 @@
   \begin{abstract}
 
   Apresenta-se nesta dissertação um estudo dedicado a lidar com a tarefa de tradução usando redes neurais, em condições de pouca disponibilidade de dados e com apenas uma GPU, com foco específico para o português-inglês. 
-  Será avaliado o efeito prático de técnicas disponíveis na literatura que possuem algum potencial de melhorar a performance nesse contexto, como subword embeddings, pretrained word embeddings e back translation, e como elas  impactam qualitativamente no desempenho em frases de diferentes níveis de complexidade.
+  Será avaliado o efeito prático de técnicas disponíveis na literatura que possuem algum potencial de melhorar a performance nesse contexto, como subword embeddings, pre-trained word embeddings e back translation, e como elas  impactam qualitativamente no desempenho em frases de diferentes níveis de complexidade.
   Essas técnicas terão seus prós e contras avaliados e discutidos, utilizando as principais arquiteturas utilizadas na literatura, redes neurais recorrentes e baseadas em transformers.
   (avaliar isso) O melhor modelo desenvolvido é capaz de atingir x\% de score BLEU e y de perplexidade no conjunto de teste do dataset xpto.
 
@@ -76,7 +76,7 @@
   \begin{foreignabstract}
 
   In this work, a dedicated analysis is executed to get best practices on how to tackle neural machine translation under low data availability and using a single GPU, focusing specifically on the Portuguese-English pair. 
-  Techniques in the literature that can potentially boost the performance under this context will be evaluated, such as subword embeddings, pretrained word embeddings and back translation, and the qualitative impact of them is presented in sentences with a complexity drill down.
+  Techniques in the literature that can potentially boost the performance under this context will be evaluated, such as subword embeddings, pre-trained word embeddings and back translation, and the qualitative impact of them is presented in sentences with a complexity drill down.
   The tradeoffs of these techniques are discussed, contemplating the main architectures used in the literature, neural recurrent models and transformer-based ones.
   (evaluate this) The best model built is capable of reaching x\% BLEU score and y Perplexity in the test set for the xpto Portuguese dataset.
 
@@ -97,7 +97,7 @@
   
   Despite being constrained by computational power in many stages since its beginning, one of the most relevant contributions to the translation task were the transformers, which made possible to perform the computation in a truly parallel schema. With this new architecture, the operations performed during training are not totally dependent, allowing them to become parallelizable in the GPU. By removing the constraint of some operations having to wait for others to finish, NMT models were enabled to scale and reach even higher quality translations.
   
-  In 3 years NMT became the dominant approach to machine translation, inducing a major transition from statistical to neural models. The broad set of parameters and architectures already present in the literature that could be used to boost translation quality, along with the promising results being presented at the time reached the interest of researchers to explore this variant.
+  In 3 years NMT became the dominant approach to machine translation, inducing a major transition from statistical to neural models. An interesting scenario reached the interest of researchers to explore this approach: the broad set of parameters and architectures already present in the neural networks literature that could be used as a toolkit to boost translation quality and the promising results being presented at the time.
 
   \section{Challenges for the Portuguese language}
 
@@ -109,7 +109,7 @@
   
   \section{Contributions of this dissertation}
   
-  The generic contribution of this work is the evaluation of a set of techniques available in the literature for NMT that can help dealing with low resource domains, although being applied to Portuguese they can be generalized to other languages. There is also a specialized contribution under a qualitative domain, as performance gains provided by these techniques are evaluated in a subset of sentences that contain a complexity drill down, enabling the reader to have a deeper understanding of their effects on the Portuguese language.
+  The generic contribution of this work is the evaluation of a set of techniques available in the literature for NMT that can help dealing with low resource domains, although being applied to Portuguese they can be generalized to other languages. There is also a specialized contribution under a qualitative domain: performance gains provided by these techniques are evaluated in a subset of sentences that contain a complexity drill down. This enables the reader to have a deeper understanding of their effects on the Portuguese language.
 
   \section{Chapter Organization}
 
@@ -193,7 +193,7 @@
   
   \section{How far transformers can go? Which changes are the most promising?}
   
-  Talk briefly of GPT, maybe bert, and other transformer variations, including using word embeddings 
+  Talk briefly of GPT, maybe bert, and other transformer variations
   
   GPT-3 \citet{brown2020language}
   
@@ -211,30 +211,56 @@
  
   Apart from the efforts put into iterating on the learning objective and benefits claimed by these papers, some side effects of switching the training objective are also diagnosed by \citet{DBLP:journals/corr/abs-1907-01752}. They point out the weakness of RL based approaches for optimization, claim that some of the increases are not fully attributed to the techniques and also discuss convergence issues of these new objectives. Given this unclear scenario of how iterating on the learning objective can lead to better translations, changing it in our work was not taken into consideration.
 
-  \chapter{Low resource context}
+  \chapter{Low resource domain context}
   
+  By definition, low resource situations happen when any of the resources needed to commit to one task are lacking, and in NMT this can happen in many ways. To train a supervised model, a large enough language pair parallel dataset is needed, and if the model is "data hungry", which is an issue that increases with model complexity, a small dataset can significantly hinder results. There are some situations where if a dataset is small enough, phrase based machine translation models can outperform NMT, such as the case study reported in \citet{sennrich-zhang-2019-revisiting}.
+  
+  The second most important matter that is fundamental to the success of a translation model is the infrastructure needed for the training setup, which requires one or more GPUs or TPUs to be trained. Datasets considered to be small (<100k sentences) often do not fit into CPU, and when they do, training is so slow that sometimes one has to wait from 4 to 12 times more than with a GPU. The bigger a dataset is, and remembering that size is affected by number of sentences and number of words per sentence, the more memory it will require from a GPU to be fit in every epoch.
+  
+  There are other neccessary resources such as disk storage, internet, a configured python environment (or another language of choice), but these are usually less relevant and more accessible, so usually not a blocker. When referring to low resource domain, we only consider dataset size and GPU power as mentioned above.
+  
+  \section{Datasets of this work}
+  
+  Given the goal of analysing translation quality with different sentence complexity levels, portuguese datasets were carefully chosen to match our GPU and model complexity constraints. Regarding GPU memory, from highest to lowest, the 3 hyperparameters that impact it most are batch size, hidden size and embedding size. Low batch size can significantly increase the time to train and hinder the training process, since the model sees less examples at each iteration. We had to determine a hard cutoff where if a model cannot be trained with at least that batch size, it will be discarded. That batch size is 64.
+  
+  Based on experimental iterations, some datasets such as europarl \cite{philipp-koehn-europarl} which contain 1.9 million sentences, even when reduced to more than 10 times its original size, still could not fit into a single Nvidia K80, T4 or P100 GPU, within our batch size threshold of 64. Attempts to do this using a traditional transformer from \citet{DBLP:journals/corr/VaswaniSPUJGKP17} and a RNN model based on \citet{bahdanau2016neural} with 25\% of the original embedding and hidden layer sizes both failed. As europarl is a domain specific dataset with long sentences, reducing its size results in expecting the model to learn long and complex sentences with less data, which is unfeasible. Therefore, this dataset was discarded from our list.
+  
+  Another publicly available portuguese dataset that consists of TED talks \cite{cettolo-ted-talks} represented a relevant addition to the experiments performed in this work, as it easily fitted our goals. This dataset has some nice properties, it contains mixed domains since the subject of talks can vary a lot, sentences range from easy to high complexity and it has about 220k sentences (after filtering common XML tags) for the training set, which is considered to be medium sized. In our experiments, the first 1295 talks out of 1938 in the original file were selected for the training set, the following ones were discarded. This results in a training set with 169k sentences, test with 11.4k sentences and dev 4.15k. As this dataset worked in our setup with the previously mentioned models and above our minimum batch size, it is included in the experiments performed.
+  
+  \textcolor{red}{1. seria legal disponibilizar uma replica do dataset TED talks, ou pelo menos quais linhas foram usadas do dataset original} \textcolor{red}{2. deveria colocar a métrica de palavras totais e palavras unicas pro dataset de ted talks?}
+  
+  There is a collaborative dataset created and maintained by the Tatoeba Project \cite{DBLP:journals/corr/abs-2010-06354} available on the internet that contains several English-Portuguese sentence pairs. The project contains datasets with several bilingual sentence pairs, considered to match an intermediate english level and translated from English to several other languages, including Portuguese. The Portuguese dataset contains 165k sentences, with 993k words and 21k unique words. It was built by native speakers and has been reviewed by a linguistic expert. This dataset easily fits into memory and provides low to medium complexity sentences to the model, so it's a good complement to TED Talks.
 
-  \section{low resource techniques}   
+  \section{Addressing open vocabulary}
+
+  NMT typically operates with fixed vocabulary, which can be expected in artificial splits using cross validation, but does not reflect what happens in real world cases. Due to practical reasons related to computational constraints, the vocabulary size of an average NMT model ranges from 30k to 50k words. Most models will have to deal with out of vocabulary (OOV) words when seeing new data, and word level NMT usually performs poorly under these settings. A word level model uses a unknown token "<unk>" to represent unseen words, and not much can be done to avoid this, unless embeddings are captured in a different level. 
   
-  decide where to put this ----
-  Transfer Learning for Low-Resource Neural Machine Translation \citet{zoph-etal-2016-transfer}
+  Changing the level that embeddings are captured is one alternative to make it more resilient to the open vocabulary issue, but other techniques are also reported in the literature. They will be presented in the following sections.
   
-  Revisiting Low-Resource Neural Machine Translation: A Case Study \citet{sennrich-zhang-2019-revisiting}
-  ------------------------
+  \subsection{Transfer learning}
   
-  \subsection{Pretrained word embeddings}
-  
-  When and Why Are Pre-Trained Word Embeddings Useful for Neural Machine Translation? \citet{qi-etal-2018-pre} 
-  
-  Enriching Word Vectors with Subword Information (fast text) \citet{DBLP:journals/corr/BojanowskiGJM16}
+   Transfer learning was used by \citet{zoph-etal-2016-transfer}, where the weights of a high resource language pair are transferred to another unrelated low resource language pair, both having English as the target language. The lift in BLEU was enough to make the NMT system to overcome the previous state of the art syntax based machine translation (SBMT) system.
+   
+   Another approach to transfer learning that acts upon the embeddings learned is the use of pre-trained word embeddings, which are trained as language models to adjust vectors inside a N dimensional space. The learned representations (weights) are used by the NMT model as a starting point, instead of the random initialization that happens when the model is trained from scratch. Embeddings such as \citet{pennington-etal-2014-glove} and \cite{DBLP:journals/corr/BojanowskiGJM16} were used in this work, both trained in a large portuguese monolingual dataset. These embeddings are between some of those made available by \citet{DBLP:journals/corr/abs-1708-06025}. The same preprocessing tokenization pipeline applied by them is used in our experiments.
+   
+   An interesting work that analyses the effect of using pre-trained word embeddings in low resource scenarios is performed by \citet{qi-etal-2018-pre}. Some of the findings reported are that there is a "sweet spot" where word embeddings are the most effective, when there is little training data but not so little that the model cannot be trained and that pre-trained word embeddings seem to be more effective to more similar language pairs. 
+   
+   The performance increases of the work done by \cite{qi-etal-2018-pre} achieved in several setups exceeds the gains and potential for the technique presented at \cite{zoph-etal-2016-transfer}. Moreover, potential language misalignments that may arise from the latter provides enough evidence to choose pre-trained word embeddings as the preferred transfer learning rather than fine tuning from a different dataset.
   
   \subsection{Subword embeddings}
   
-  BPE \citet{DBLP:journals/corr/SennrichHB15} 
+  This type of embedding does not suffer from the OOV issue as the traditional word level setup, as it breaks words into smaller units and learns how to group these units to reconstruct the original translated sentence. Subword models can be designed to act in a character level or in an intermediate level between word and character (like phonemes, syllables and others).
+  
+  One of the pioneer works to introduce subword embeddings was done by \citet{DBLP:journals/corr/SennrichHB15}, where a segmentation algorithm based on byte pair encoding is introduced to learn segmentations based on text
+  
+  Revisiting Low-Resource Neural Machine Translation: A Case Study \citet{sennrich-zhang-2019-revisiting}
+  
+  Enriching Word Vectors with Subword Information (fast text) \citet{DBLP:journals/corr/BojanowskiGJM16}
   
   Sentence piece \citet{DBLP:journals/corr/abs-1808-06226}
   
   Achieving Open Vocabulary Neural Machine Translation with Hybrid Word-Character Models \citet{DBLP:journals/corr/LuongM16}
+  
   
   Talk of using Glove, word2vec, fasttext and others
   
@@ -251,8 +277,29 @@
   \section{Qualitative evaluation}
   
   \subsection{Translation metrics with complexity drill down}
+  
+  \begin{table}[h]
+  \caption{Translation metrics with complexity drill down}
+  \label{tab:citation}
+  \centering
+  {\footnotesize
+  \begin{tabular}{|c|c|c|c|}
+    \hline
+    Hipothesis & \verb|Complexity| & \verb|Reference| & \verb|Translation|\\
+    \hline
+    Eu voei no Força Aérea 2 por oito anos. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|I flew in Air Force Two for eight years.|\\
+    % Artigo & \cite{article-example} & \citet{article-example}\\
+    % Relat\'orio & \cite{techreport-example} & \citet{techreport-example}\\
+    % Relat\'orio & \cite{techreport-exampleIn} & \citet{techreport-exampleIn}\\
+    % Anais de Congresso & \cite{inproceedings-example} &
+    %   \citet{inproceedings-example}\\
+    \hline
+  \end{tabular}}
+  \end{table}
 
   \chapter{Next steps for this dissertation}
+  
+  Publish paper at CBIC (30/05) or STIL (TBD)
   
   Preliminary deadline at 10/09/2021
   
@@ -311,16 +358,6 @@
     \hline
   \end{tabular}}
   \end{table}
-
-  \chapter{Results}
-  
-  \section{Datasets}
-  
-  Apart from the issues outlined, there is a collaborative dataset created and maintained by the Tatoeba Project that contains several English-Portuguese sentence pairs, that is available on the internet. The project contains datasets with several bilingual sentence pairs, considered to match an intermediate english level and translated from English to several other languages, including Portuguese. The Portuguese dataset contains 165k sentences, with 993k words and 21k unique words. It was built by native speakers and has been reviewed by a linguistic expert.
-
-  When compared to the average WMT datasets, it is not as large and the vocabulary size is a bit smaller, so it is considered medium level dataset to machine translation, but it suffices our needs.
-  
-  \chapter{Conclusions}
 
   \backmatter
   \bibliographystyle{coppe-unsrt}
