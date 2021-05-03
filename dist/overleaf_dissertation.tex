@@ -203,7 +203,7 @@
   
   \subsection{Alternative training objectives}
   
-  Despite many state of the art models having reached their scores using the original maximum likelihood estimation learning objective, the work of \citet{ranzato-sequence} indicate two drawbacks of using it in NMT. First, during training NMT models are not exposed to their translation errors, this phenomenon is referred to as exposure bias. Finally, the MLE estimation is defined at word level rather than sentence level, so theoretically the optimization objective is not aligned with the final objective, which is to generate a sentence that can match a human translation. 
+  Despite many state of the art models having reached their scores using the original maximum likelihood estimation learning objective, the work of \citet{ranzato-sequence} indicate two drawbacks of using it in NMT. First, during training NMT models are not exposed to their translation errors, this phenomenon is referred to as exposure bias. Finally, the MLE estimation is defined at word-level rather than sentence level, so theoretically the optimization objective is not aligned with the final objective, which is to generate a sentence that can match a human translation. 
   
   With this problem in mind, they introduce Mixed Incremental Cross Entropy Reinforce (MIXER), which switches the learning objective towards sentence-level training. This algorithm tries to handle the problem of backpropagating gradients on non-differentiable metrics such as BLEU with some ideas borrowed from reinforcement learning (RL). 
   
@@ -213,7 +213,7 @@
 
   \chapter{Low resource domain context}
   
-  By definition, low resource situations happen when any of the resources needed to commit to one task are lacking, and in NMT this can happen in many ways. To train a supervised model, a large enough language pair parallel dataset is needed, and if the model is "data hungry", which is an issue that increases with model complexity, a small dataset can significantly hinder results. There are some situations where if a dataset is small enough, phrase based machine translation models can outperform NMT, such as the case study reported in \citet{sennrich-zhang-2019-revisiting}.
+  By definition, low resource situations happen when any of the resources needed to commit to one task are lacking, and in NMT this can happen in many ways. To train a supervised model, a large enough language pair parallel dataset is needed, and if the model is data-hungry, which is an issue that increases with model complexity, a small dataset can significantly hinder results. There are some situations where if a dataset is small enough, phrase based machine translation models can outperform NMT, such as the case study reported in \citet{sennrich-zhang-2019-revisiting}.
   
   The second most important matter that is fundamental to the success of a translation model is the infrastructure needed for the training setup, which requires one or more GPUs or TPUs to be trained. Datasets considered to be small (<100k sentences) often do not fit into CPU, and when they do, training is so slow that sometimes one has to wait from 4 to 12 times more than with a GPU. The bigger a dataset is, and remembering that size is affected by number of sentences and number of words per sentence, the more memory it will require from a GPU to be fit in every epoch.
   
@@ -233,15 +233,15 @@
 
   \section{Addressing open vocabulary}
 
-  NMT typically operates with fixed vocabulary, which can be expected in artificial splits using cross validation, but does not reflect what happens in real world cases. Due to practical reasons related to computational constraints, the vocabulary size of an average NMT model ranges from 30k to 50k words. Most models will have to deal with out of vocabulary (OOV) words when seeing new data, and word level NMT usually performs poorly under these settings. A word level model uses a unknown token "<unk>" to represent unseen words, and not much can be done to avoid this, unless embeddings are captured in a different level. 
+  NMT typically operates with fixed vocabulary, which can be expected in artificial splits using cross validation, but does not reflect what happens in real world cases. Due to practical reasons related to computational constraints, the vocabulary size of an average NMT model ranges from 30k to 50k words. Most models will have to deal with out of vocabulary (OOV) words when seeing new data, and word-level NMT usually performs poorly under these settings. A word-level model uses a unknown token "<unk>" to represent unseen words, there are some ways to avoid this, one of the most common ones are to capture embeddings in a different level. 
   
-  Changing the level that embeddings are captured is one alternative to make it more resilient to the open vocabulary issue, but other techniques are also reported in the literature. They will be presented in the following sections.
+  There are other techniques that allow the NMT task to be more resilient to the open vocabulary issue that are also reported in the literature. They will be presented in the following sections.
   
   \subsection{Transfer learning}
   
-   Transfer learning was used by \citet{zoph-etal-2016-transfer}, where the weights of a high resource language pair are transferred to another unrelated low resource language pair, both having English as the target language. The lift in BLEU was enough to make the NMT system to overcome the previous state of the art syntax based machine translation (SBMT) system.
+   Transfer learning is a common method in machine learning where a model developed for a specific rtask is reused as the starting point for a model in another task. This technique was used by \citet{zoph-etal-2016-transfer}, where the weights of a high resource language pair are transferred to another unrelated low resource language pair, both having English as the target language. The lift in BLEU was enough to make the NMT system to overcome the previous state of the art syntax based machine translation (SBMT) system.
    
-   Another approach to transfer learning that acts upon the embeddings learned is the use of pre-trained word embeddings, which are trained as language models to adjust vectors inside a N dimensional space. The learned representations (weights) are used by the NMT model as a starting point, instead of the random initialization that happens when the model is trained from scratch. Embeddings such as \citet{pennington-etal-2014-glove} and \cite{DBLP:journals/corr/BojanowskiGJM16} were used in this work, both trained in a large portuguese monolingual dataset. These embeddings are between some of those made available by \citet{DBLP:journals/corr/abs-1708-06025}. The same preprocessing tokenization pipeline applied by them is used in our experiments.
+   Another approach to transfer learning that acts upon the embeddings learned is the use of pre-trained word embeddings, which are trained as language models to adjust vectors inside a N dimensional space. The learned representations (weights) are used by the NMT model as a starting point, instead of the random initialization that happens when the model is trained from scratch.
    
    An interesting work that analyses the effect of using pre-trained word embeddings in low resource scenarios is performed by \citet{qi-etal-2018-pre}. Some of the findings reported are that there is a "sweet spot" where word embeddings are the most effective, when there is little training data but not so little that the model cannot be trained and that pre-trained word embeddings seem to be more effective to more similar language pairs. 
    
@@ -249,30 +249,37 @@
   
   \subsection{Subword embeddings}
   
-  This type of embedding does not suffer from the OOV issue as the traditional word level setup, as it breaks words into smaller units and learns how to group these units to reconstruct the original translated sentence. Subword models can be designed to act in a character level or in an intermediate level between word and character (like phonemes, syllables and others).
+  This type of embedding does not suffer from the OOV issue as the traditional word-level setup, as it breaks words into smaller units and learns how to group these units to reconstruct the respective translation for the original sentence. Subword models can be designed to act in a character level or in an intermediate level between word and character (like phonemes, syllables and others). The time complexity of encoder-decoder architectures is at least linear with respect to the sequence length, despite the success this technique achieved, one of the drawbacks of the original implementation is that one cannot clearly define the maximum vocabulary size a priori. 
   
-  One of the pioneer works to introduce subword embeddings was done by \citet{DBLP:journals/corr/SennrichHB15}, where a segmentation algorithm based on byte pair encoding is introduced to learn segmentations based on text
+  Given the trade-offs of using subword models to address the open vocabulary issue along with the unwanted side effect of increasing vocabulary size, some research was performed towards using character-level RNNs only when word-level embeddings generate a OOV word in \citet{DBLP:journals/corr/LuongM16}. This was a recommended approach before subword started to mature, as they reduce the vocabulary size when compared to character-level
   
-  Revisiting Low-Resource Neural Machine Translation: A Case Study \citet{sennrich-zhang-2019-revisiting}
+  One of the pioneer works to introduce subword embeddings was done by \citet{DBLP:journals/corr/SennrichHB15}, where a segmentation algorithm based on byte pair encoding (a compression algorithm) is introduced to learn segmentations based on text. One of the strengths of this method is that it is simple, cheap to run, easy to understand and effective. One hyperparameter needed to tune this algorithm is the number of merge operations, which is proportional to the final vocabulary size.
   
-  Enriching Word Vectors with Subword Information (fast text) \citet{DBLP:journals/corr/BojanowskiGJM16}
+  A work published later by \citet{sennrich-zhang-2019-revisiting} reports the practical effect of changing word-level NMT to subword NMT using BPE, along with other techniques such as lexical model \cite{nguyen-chiang-2018-improving}. The ultra-low resource setting is the one that benefited the most, going from 7.2 BLEU to 16.6 using the base model of \citet{bahdanau2016neural}. 
   
-  Sentence piece \citet{DBLP:journals/corr/abs-1808-06226}
+  In order to address the a priori vocabulary issue mentioned before, Google has developed an useful toolkit that implements several sentence segmentation algorithms (with BPE being one of them) that are language agnostic \cite{DBLP:journals/corr/abs-1808-06226}. This implementation was made in C++ and is also available as a python library. It is designed to be a flexible toolkit with a fast and lightweight implementation that allows the a priori vocabulary size definition and the use of other features such as NFKC-based text normalization. Given all the pros of using this implementation compared to implementing BPE on our own, this toolkit is used to develop our subword embedding models.
   
-  Achieving Open Vocabulary Neural Machine Translation with Hybrid Word-Character Models \citet{DBLP:journals/corr/LuongM16}
-  
-  
-  Talk of using Glove, word2vec, fasttext and others
+  Pre-trained word embeddings also followed the subword trend with the work published by \citet{DBLP:journals/corr/BojanowskiGJM16}, which became popular with the name of fast text. This algorithm is inspired on word2vec using the skipgram variant, it treats words as a bag of character n-grams and adds special symbols ">" and "<" at the beginning and end of words, allowing to distinguish prefixes and suffixes from other character sequences. Each word is assigned a number of n-grams, and in practice only n-grams for n greater than or equal to 3 and smaller or equal to 6 are extracted for each word. Finally, a word is represented by the sum of the vector representations of its n-grams, when learned it is represented by an index and a respective set of n-grams. 
   
   \subsection{Data Augmentation}
   
-  Improving Neural Machine Translation Models with Monolingual Data \citet{DBLP:journals/corr/SennrichHB15a}
+  The amount of parallel data is key to the success of NMT, and data-hungry complex models provide limitations for scientists contributing to this field. Unfortunately, large-scale parrallel corpora is not available for the majority of the existing language pairs. On the other hand, it is much easier to obtain monolingual corpora, and this scenario motivated the study of data augmentation as a supportive method to NMT.
   
-  Generalized Data Augmentation for Low-Resource Translation \citet{DBLP:journals/corr/abs-1906-03785}
+  Aiming to transfer the knowledge from language models to NMT, \citet{gulcere-language-model-nmt} shows 2 attempts to achieve this task: shallow fusion and deep fusion. The first uses a language model during decoding to rescore the n-base list. The other combines decoder and language model which are coordinated with a controller mechanism. Unfortunately, improvements reported are limited to less than 1 BLEU. 
+  
+  A branch of research studies variations of the technique referred to as back-translation (BT). In \citet{DBLP:journals/corr/SennrichHB15a} they extract target-side monolingual data, train a model to translate back to the source language and uses it to build synthetical translations, that are reused on the original dataset to train another version of the NMT model. BT has shown to be a simple, yet effective method to address low data availability in many domains, as shown in \citet{DBLP:journals/corr/abs-1804-06189}. They show that there is a trend of increasing translation performance with certain a amount of synthetic translations added, but it appears to tail off when the dataset balance is tipped too far in favour of the synthetic data. 
+  
+  Other ways of generating synthetic data are presented and compared in the work presented by  \citet{DBLP:journals/corr/abs-1906-03785}. Augmentation methods are discussed in scenarios with high resource languages (HRL) and low resource languages (LRL), where it can be performed via pivoting, word substitution (with the use of a dictionary) and even through unsupervised methods. They also introduce a two-step pivoting method that can use a HRL to create artificial examples for a LRL, when only a small dataset with both languages is available. This is particularly useful for languages that have even less available resources than Portuguese. 
  
   \chapter{Results}
   
   \section{Methodology}
+  
+  Embeddings such as \citet{pennington-etal-2014-glove} and \cite{DBLP:journals/corr/BojanowskiGJM16} were used in this work, the former was chosen with the goal of benefiting from global statistic features of word and the latter because of the positive effect of subword units in addressing open vocabulary. Both embeddings were trained in a large portuguese monolingual dataset and made available by \citet{DBLP:journals/corr/abs-1708-06025}. 
+  
+  The preprocessing tokenization pipeline applied by them is the same used in our experiments. In summary, numbers, emails and URLs are replaced by their respective tokens, punctuations are reduced to a single character when they occur more than once, some html formatting is removed and the text is converted to lowercase. The experiments were conducted using Python, Gensim was the library used to deal with word embeddings, sacrebleu \cite{post-2018-call} is the implementation used for calculating BLEU score and language specific Spacy tokenizers were also used.
+  
+  The tatoeba dataset, was split into train, test and validation, with the test set having 10\% of the original dataset. The remaining data was split into train and validation sets, with 90\% and 10\% each.
   
   \section{Qualitative evaluation}
   
