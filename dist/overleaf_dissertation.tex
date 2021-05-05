@@ -30,7 +30,7 @@
 \documentclass[msc,numbers,english]{coppe} % maybe mscexam?
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{array}
 
 \makelosymbols
@@ -110,19 +110,20 @@
   
   \section{Contributions of this dissertation}
   
-  The generic contribution of this work is the evaluation of a set of techniques available in the literature for NMT that can help dealing with low resource domains, although being applied to Portuguese they can be generalized to other languages. There is also a specialized contribution under a qualitative domain: performance gains provided by these techniques are evaluated in a subset of sentences that contain a complexity drill down. This enables the reader to have a deeper understanding of their effects on the Portuguese language.
+  The generic contribution of this work is the evaluation of a set of techniques available in the literature for NMT that can help dealing with low resource domains, although being applied to Portuguese they can be generalized to other languages. These techniques will be compared to a Google Translate benchmark to compare their effectiveness. There is also a specialized contribution under a qualitative domain: performance gains provided by these techniques are evaluated in a subset of sentences that contain a complexity drill down. This enables the reader to have a deeper understanding of their effects on the Portuguese language.
 
   \section{Chapter Organization}
 
-  \textcolor{red}{(a ideia final para a dissertação do chapter 2 é falar de arquitetura e revisão teórica/bibliográfica de fundamentos da arquitetura, depois no 3 mostrar restrições que acontecem em low resource domains e suas consequencias, com revisão bibliográfica das técnicas disponíveis que podem ajudar nesse contexto e a motivação das escolhas feitas)}
+%   \textcolor{red}{(a ideia final para a dissertação do chapter 2 é falar de arquitetura e revisão teórica/bibliográfica de fundamentos da arquitetura, depois no 3 mostrar restrições que acontecem em low resource domains e suas consequencias, com revisão bibliográfica das técnicas disponíveis que podem ajudar nesse contexto e a motivação das escolhas feitas)}
 
   An explanation of the transformer and recurrent neural network architectures and how researchers iterated on them to become state of the art is given in chapter 2.
   
   In chapter 3 constraints that arise in low resource domains and a review of techniques that can potentially help to reduce those issues are presented, along with the rationale behind our choices.
   
-  The datasets chosen are presented in chapter 4, where we also describe implementation details, how hyperparameters were iterated on to fit in a single machine GPU and results of the experiments, which are measured in terms of validation perplexity, BLEU and \textcolor{red}{TER(?)(<to be defined>)}. A qualitative discussion regarding human and model translations in different complexity levels is also performed.
+  The datasets chosen are presented in chapter 4, where we also describe implementation details, how hyperparameters were iterated on to fit in a single machine GPU and results of the experiments, which are measured in terms of validation perplexity, BLEU and TER. A qualitative discussion regarding human and model translations in different complexity levels is also performed.
   
-  \textcolor{red}{(Finally, in chapter 5 this work is concluded and further improvements and study directions are outlined.)}
+%   \textcolor{red}{TER(?)(<to be defined>)}
+%   \textcolor{red}{(Finally, in chapter 5 this work is concluded and further improvements and study directions are outlined.)}
   
   Finally, in chapter 5, next steps to conclude this work in the following months are presented
 
@@ -154,7 +155,7 @@
   
   Another improvement that contributed to the success of this approach is the use of bidirectional RNNs to encode the input sequence, the vector that flows from the encoder to the decoder now contains a representation not only of the preceding words but also of the following words, allowing a more efficient attention weight distribution. Despite these improvements, the attention mechanism is still rather simple and does not accomplish the importance attribution task as well as its succeeding variants, implemented in other papers later on.
   
-  \textcolor{red}{(equations from the paper will be put in here later to matematically explain how attention is distributed)}
+%   \textcolor{red}{(equations from the paper will be put in here later to matematically explain how attention is distributed)}
   
   An interesting work that explores the potential the previous presented RNN models have is executed by \citet{britz2017massive}, where using \cite{cho-etal-2014-learning} as a base model, several hyperparameters like embedding size, RNN cell variant (LSTM and GRU), encoder and decoder depth, unidirectional vs. bidirectional RNN encoders, attention mechanism and beam search parameters are iterated and findings about the best setups are reported. One of the claims of this work is that careful hyperparamter tuning can yield better results than many others that explored architecture variations.
   
@@ -168,7 +169,7 @@
   
   The attention mechanism differs from previous implementations, but the goal is the same: to enable the model to distribute the influences of every input on the outputs generated. It can be described as mapping a query and a set of key-value pairs to an output, where the query (Q), keys (K) and values (V) are all vectors with dimensions defined by a hyperparameter. The original paper implements scaled dot product attention, computing dot products of the queries with all keys, then dividing by a normalizing factor $\sqrt{d_{k}}$ and passing this result into a softmax.
   
-  \textcolor{red}{(equations from the paper will be put in here later to matematically explain attention)}
+%   \textcolor{red}{(equations from the paper will be put in here later to matematically explain attention)}
   
   Multi-head self-attention also plays a role on the contribution given by the authors, they claim that it is beneficial to project the matrices Q, K and V in attention h times, with different learned projections by each one of the heads. The projections of each head are concatenated and the attention weights are adjusted to different representation subspaces at different positions. At the beginning, multi-head self-attention was thought to be consistently contributing to the transformer performance. Years later after an analysis performed by \citet{DBLP:journals/corr/abs-1905-09418}, this hypothesis was rejected. 
   
@@ -226,13 +227,15 @@
   
   \section{Datasets of this work}
   
-  Given the goal of analysing translation quality with different sentence complexity levels, portuguese datasets were carefully chosen to match our GPU and model complexity constraints. Regarding GPU memory, from highest to lowest, the 3 hyperparameters that impact it most are batch size, hidden size and embedding size. Low batch size can significantly increase the time to train and hinder the training process, since the model sees less examples at each epoch, can be biased by these examples and also experience convergence issues. We had to determine a hard cutoff where if a model cannot be trained with at least that batch size, it will be discarded. That batch size is 64.
+  Given the goal of analysing translation quality with different sentence complexity levels, portuguese datasets were carefully chosen to match our GPU and model complexity constraints. Regarding GPU memory, from highest to lowest, the 3 hyperparameters that impact it most are batch size, hidden size and embedding size. 
+  
+  Low batch size can significantly increase the time to train and hinder the training process, since the model sees less examples at each epoch, can be biased by these examples and also experience convergence issues. We had to determine a hard cutoff where if a model cannot be trained with at least that batch size, it will be discarded. A literature review hardly ever shows a paper which used batch size lower than 128. When training with batch size 64 in 3 different datasets, epochs take from 3 minutes to 8 minutes, which is already a lot given that models may need 100 epochs or more to reach complete convergence. Based on this, the minimum batch size chosen to be used is 64.
   
   Based on experimental iterations, some datasets such as europarl \cite{philipp-koehn-europarl} which contain 1.9 million sentences, even when reduced to more than 10 times its original size, still could not fit into a single Nvidia Tesla K80, T4 or P100 GPU, within our batch size threshold of 64. Attempts to do this using a traditional transformer from \citet{DBLP:journals/corr/VaswaniSPUJGKP17} and a RNN model based on \citet{bahdanau2016neural} with 25\% of the original embedding and hidden layer sizes both failed. As europarl is a domain specific dataset with long sentences, reducing its size results in expecting the model to learn long and complex sentences with less data, which is unfeasible. Therefore, this dataset was discarded from our list.
   
-  Another publicly available portuguese dataset that consists of TED talks \cite{cettolo-ted-talks} represented a relevant addition to the experiments performed in this work, as it easily fitted our goals. This dataset has some nice properties, it contains mixed domains since the subject of talks can vary a lot, sentences range from easy to high complexity and it has about 220k sentences (after filtering common XML tags) for the training set, which is considered to be medium sized. As this dataset worked in our setup with the previously mentioned models and above our minimum batch size, it is included in the experiments performed.
+  Another publicly available portuguese dataset that consists of TED talks \cite{cettolo-ted-talks} represented a relevant addition to the experiments performed in this work, as it easily fitted our goals. It had to be reduced to fit into a single GPU memory, further details about this process can be found on the methodology session. This dataset has some nice properties, it contains mixed domains since the subject of talks can vary a lot, sentences range from easy to high complexity and it has about 220k sentences (after filtering common XML tags) for the training set, which is considered to be medium sized. As this dataset worked in our setup with the previously mentioned models and above our minimum batch size, it is included in the experiments performed.
   
-  \textcolor{red}{1. seria legal disponibilizar uma replica do dataset TED talks, ou pelo menos quais linhas foram usadas do dataset original} \textcolor{red}{2. deveria colocar a métrica de palavras totais e palavras unicas pro dataset de ted talks?}
+%   \textcolor{red}{1. seria legal disponibilizar uma replica do dataset TED talks, ou pelo menos quais linhas foram usadas do dataset original} \textcolor{red}{2. deveria colocar a métrica de palavras totais e palavras unicas pro dataset de ted talks?}
   
   There is a collaborative dataset created and maintained by the Tatoeba Project \cite{DBLP:journals/corr/abs-2010-06354} available on the internet that contains several English-Portuguese sentence pairs. The project contains datasets with several bilingual sentence pairs, considered to match an intermediate english level and translated from English to several other languages, including Portuguese. The Portuguese dataset contains 165k sentences, with 993k words and 21k unique words. It was built by native speakers and has been reviewed by a linguistic expert. This dataset easily fits into memory and provides low to medium complexity sentences to the model, so it's a good complement to TED Talks.
 
@@ -248,23 +251,23 @@
    
    Another approach to transfer learning that acts upon the embeddings learned is the use of pre-trained word embeddings, which are trained as language models to adjust vectors inside a N dimensional space. The learned representations (weights) are used by the NMT model as a starting point, instead of the random initialization that happens when the model is trained from scratch.
    
-   An interesting work that analyses the effect of using pre-trained word embeddings in low resource scenarios is performed by \citet{qi-etal-2018-pre}. Some of the findings reported are that there is a "sweet spot" where word embeddings are the most effective, when there is little training data but not so little that the model cannot be trained, and that pre-trained word embeddings seem to be more effective to more related language pairs. 
+   An interesting work that analyses the effect of using pre-trained word embeddings in low resource scenarios is performed by \citet{qi-etal-2018-pre}. Some of the findings reported are that there is a "sweet spot" where word embeddings are the most effective, when there is little training data but not so little that the model cannot be trained, bilingual word embeddings may not help in performance and that pre-trained word embeddings seem to be more effective to more related language pairs. 
    
    The results reported in the work done by \cite{qi-etal-2018-pre} for several language pairs in a range of scenarios are more consistent, while the technique presented at \cite{zoph-etal-2016-transfer} is highly language dependent and subject to high deviation. Therefore, evidence indicates the choice of pre-trained word embeddings to be safer than using transfer learning from a model trained on a different dataset.
   
   \subsection{Subword embeddings}
   
-  This type of embedding does not suffer from the OOV issue as the traditional word-level setup, as it breaks words into smaller units and learns how to group these units to reconstruct the respective translation for the original sentence. Subword models can be designed to act in a character level or in an intermediate level between word and character (like phonemes, syllables and others). The time complexity of encoder-decoder architectures is at least linear with respect to the sequence length, despite the success this technique achieved, one of the drawbacks of the original implementation is that one cannot clearly define the maximum vocabulary size a priori. 
+  This type of embedding does not suffer from the OOV issue as the traditional word-level setup, as it breaks words into smaller units and learns how to group these units to reconstruct the respective translation for the original sentence. Subword models can be designed to act in a character level or in an intermediate level between word and character (like phonemes, syllables and others). 
   
-  Given the trade-offs of using subword models to address the open vocabulary issue along with the unwanted side effect of increasing vocabulary size, some research was performed towards using character-level RNNs only when word-level embeddings generate a OOV word in \citet{DBLP:journals/corr/LuongM16}. This was a recommended approach before subword started to mature, as they reduce the vocabulary size when compared to character-level
+  One of the pioneer works to introduce subword embeddings was done by \citet{DBLP:journals/corr/SennrichHB15}, where a segmentation algorithm based on byte pair encoding (a compression algorithm) is introduced to learn segmentations based on text. One of the strengths of this method is that it is simple, cheap to run, easy to understand and effective. One hyperparameter needed to tune this algorithm is the number of merge operations, which is proportional to the final vocabulary size. The time complexity of encoder-decoder architectures is at least linear with respect to the sequence length, despite the success this technique achieved, one of the drawbacks of the original implementation is that one cannot clearly define the maximum vocabulary size a priori. 
   
-  One of the pioneer works to introduce subword embeddings was done by \citet{DBLP:journals/corr/SennrichHB15}, where a segmentation algorithm based on byte pair encoding (a compression algorithm) is introduced to learn segmentations based on text. One of the strengths of this method is that it is simple, cheap to run, easy to understand and effective. One hyperparameter needed to tune this algorithm is the number of merge operations, which is proportional to the final vocabulary size.
+  Given the trade-offs of using subword models to address the open vocabulary issue, along with the unwanted side effect of increasing vocabulary size, some research was performed towards using character-level RNNs only when word-level embeddings generate a OOV word in \citet{DBLP:journals/corr/LuongM16}. This was a recommended approach before subword started to mature, as they reduce the vocabulary size when compared to character-level
   
-  A work published later by \citet{sennrich-zhang-2019-revisiting} reports the practical effect of changing word-level NMT to subword NMT using BPE, along with other techniques such as lexical model \cite{nguyen-chiang-2018-improving}. The ultra-low resource setting is the one that benefited the most, going from 7.2 BLEU to 16.6 using the base model of \citet{bahdanau2016neural}. 
+  A work published later by \citet{sennrich-zhang-2019-revisiting} reports the practical effect of changing word-level NMT to subword NMT using BPE. In the first work, the ultra-low resource setting is the one that benefited the most, going from 7.2 BLEU to 16.6 using the base model of \citet{bahdanau2016neural}. Another technique is presented in \cite{nguyen-chiang-2018-improving}, they propose a normalization technique to fix the advantage frequent words have in the output layer and use a feedforward neural network to be trained jointly with the model to generate a target word based on the source words, and call it lexical model. Most language pairs observe an increase in BLEU by using those techniques but in some pairs a drop is also spotted.
   
   In order to address the a priori vocabulary issue mentioned before, Google has developed an useful toolkit that implements several sentence segmentation algorithms (with BPE being one of them) that are language agnostic \cite{DBLP:journals/corr/abs-1808-06226}. This implementation was made in C++ and is also available as a python library. It is designed to be a flexible toolkit with a fast and lightweight implementation that allows the a priori vocabulary size definition and the use of other features such as NFKC-based text normalization. Given all the pros of using this implementation compared to implementing BPE on our own, this toolkit is used to develop our subword embedding models.
   
-  Pre-trained word embeddings also followed the subword trend with the work published by \citet{DBLP:journals/corr/BojanowskiGJM16}, which became popular with the name of fast text. This algorithm is inspired on word2vec using the skipgram variant, it treats words as a bag of character n-grams and adds special symbols ">" and "<" at the beginning and end of words, allowing to distinguish prefixes and suffixes from other character sequences. Each word is assigned a number of n-grams, and in practice only n-grams for n greater than or equal to 3 and smaller or equal to 6 are extracted for each word. Finally, a word is represented by the sum of the vector representations of its n-grams, when learned it is represented by an index and a respective set of n-grams. 
+  Pre-trained word embeddings also followed the subword trend with the work published by \citet{DBLP:journals/corr/BojanowskiGJM16}, which became popular with the name of fast text. This algorithm is inspired on word2vec using the skipgram variant, it treats words as a bag of character n-grams and adds special symbols ">" and "<" at the beginning and end of words, allowing to distinguish prefixes and suffixes from other character sequences. Each word is assigned a number of n-grams, and in practice only n-grams for n greater than or equal to 3 and smaller or equal to 6 are extracted for each word. Finally, a word is represented by the sum of the vector representations of its n-grams, when learned it is represented by an index and a respective set of n-grams (the subwords). 
   
   \subsection{Data Augmentation}
   
@@ -276,35 +279,43 @@
   
   Other ways of generating synthetic data are presented and compared in the work presented by  \citet{DBLP:journals/corr/abs-1906-03785}. Augmentation methods are discussed in scenarios with high resource languages (HRL) and low resource languages (LRL), where it can be performed via pivoting, word substitution (with the use of a dictionary) and even through unsupervised methods. They also introduce a two-step pivoting method that can use a HRL to create artificial examples for a LRL, when only a small dataset with both languages is available. This is particularly useful for languages that have even less available resources than Portuguese. 
  
-  \chapter{Results}
+  \chapter{Experiments on neural machine translation}
   
   \section{Methodology}
   
-  On the experiments made, embeddings such as \citet{pennington-etal-2014-glove} and \cite{DBLP:journals/corr/BojanowskiGJM16} were used, the former was chosen with the goal of benefiting from global statistic features of word and the latter because of the positive effect of subword units in addressing open vocabulary. Both embeddings were trained in a large portuguese monolingual dataset and made available by \citet{DBLP:journals/corr/abs-1708-06025}. 
+  The main purpose of this paper is to evaluate which techniques can increase the translation quality of a NMT model subjected to a low resource environment. It can be used as a guide to tell what could be behind a BLEU score increase means in terms of quality and which techniques can help in a specific setting, also to know how to deal with parameters under low resource constraints to successfully train a model on a single GPU.
   
-  The preprocessing tokenization pipeline applied by them is the same used in our experiments. In summary, numbers, emails and URLs are replaced by their respective tokens, punctuations are reduced to a single character when they occur more than once, some html formatting is removed and the text is converted to lowercase. The experiments were conducted using Python, Gensim was the library used to deal with word embeddings, sacrebleu \cite{post-2018-call} is the implementation used for calculating BLEU score and language specific Spacy tokenizers were also used.
+  To achieve this, we use Portuguese-English datasets that contain sentences in various complexity levels, and try to highlight what kind of mistakes are happening in each variant and how we can somehow connect theoretical concepts with practical results. The techniques we are going to use are: data augmentation of monolingual English data through back translation, pre-trained word embeddings Glove \cite{pennington-etal-2014-glove} and Fast Text \cite{DBLP:journals/corr/BojanowskiGJM16}, and the use of the subword embedding BPE, with prior vocabulary size set to 31k. 
   
-  The tatoeba dataset, was split into train, test and validation, with the test set having 10\% of the original dataset. The remaining data was split into train and validation sets, with 90\% and 10\% each. In order to reduce the size to fit in GPU memory, in TED talks dataset the first 1295 talks out of 1938 in the original file were selected for the training set, and the following ones were discarded. This results in a training set with 169k sentences, test with 11.4k sentences and dev 4.15k.
+  Glove was chosen with the goal of analysing from global statistic features of word co-occurrence, and Fast Text because of the positive effect of subword units in addressing open vocabulary. Both embeddings were trained in a large portuguese monolingual dataset and made available by \citet{DBLP:journals/corr/abs-1708-06025}. 
+  
+  As base architectures to be trained, we will be using a RNN model based on \cite{bahdanau2016neural} and a standard transformer implementation \cite{DBLP:journals/corr/VaswaniSPUJGKP17} with custom parameters. Both models have an embedding dimension of 256, hidden size of 512 and are trained with a learning rate of $10^{-4}$. The transformer has 8 attention heads and 6 transformer layers in the encoder and the decoder. Each dataset will be evaluated by both architectures, one variant without any of the previously mentioned techniques and one variant per technique.
+  
+  The preprocessing tokenization pipeline applied in \cite{DBLP:journals/corr/abs-1708-06025} is the same used in our experiments. In summary, numbers, emails and URLs are replaced by their respective tokens, punctuations are reduced to a single character when they occur more than once, some html formatting is removed and the text is converted to lowercase. The experiments were conducted using Python, Gensim was the library used to deal with word embeddings, sacrebleu \cite{post-2018-call} is the implementation used for calculating BLEU score and language specific Spacy tokenizers were also used.
+  
+  The tatoeba dataset, was split into train, test and validation, with the test set having 10\% of the original dataset. The remaining data was split into train and validation sets, with 90\% and 10\% each. In order to reduce the size to fit in GPU memory, in TED talks dataset the first 1295 talks out of 1938 in the original file were selected for the training set, and the following ones were discarded. This was necessary because when running our benchmarks (standard transformer and bahdanau attentio model) with the minimum stipulatd batch size, the GPU ran out of memory. In the end, the training set ended up with 169k sentences, test with 11.4k sentences and dev 4.15k. Both test and dev sets were kept untouched.
   
   The neural networks were trained from scratch on NVIDIA Tesla K80 and T4 GPUs, the metrics used to monitor the training progress were perplexity and loss, for both training and validation sets. Perplexity measures the inverse of the geometric average probability attributed to an occurring word, the lower it is the better the model is performing. During training, a new model is saved each time the best validation perplexity is achieved. If the validation perplexity doesn't improve for 10 epochs, the process is halted, meaning it reached convergence. This rule was applied to all the models.
   
-  \section{Qualitative evaluation}
+  \section{Preliminary results}
   
-  \subsection{Translation metrics with complexity drill down}
+  The experiments proposed in the methodology session haven't been performed yet, but in previous work made in some  subjects during the masters degree course, there are some results already reported on the Tatoeba dataset. These results were obtained in a slightly different setup, as the tokenization process changed a lot as did the beam search algorithm and batch training settings. The cited results can be seen on the table below. 
   
   \begin{table}[h]
-  \caption{Translation metrics with complexity drill down}
+  \caption{Translation results from previous works}
   \label{tab:citation}
   \centering
   {\footnotesize
-  \begin{tabular}{| p{4cm} | p{1cm} | p{4cm} | p{4cm} | p{1cm}|}
+  \begin{tabular}{| p{4cm} | p{2cm} | p{3cm} | p{4cm} | p{1cm}|}
     \hline
-    Hipothesis & \verb|Complexity| & \verb|Reference| & \verb|Translation| & \verb|BLEU|\\
+    Architecture & \verb|Hidden size| & \verb|Embedding size| & \verb|Validation perplexity| & \verb|BLEU|\\
     \hline
-    Eu voei no Força Aérea 2 por oito anos. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|I flew in Air Force Two for eight years.| & \verb|0.8|\\
-    Não conseguimos produzir algum tipo de combustível mais limpo para cozinhar?. & \verb|B1| & \verb|Can't we make cleaner burning cooking fuels?| & \verb|Can we not make cleaner cooking burn fuels?| & \verb|0.6|\\
-    Então isso é o que eles fazem. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|And so this is what they do.| & \verb|0.7|\\
-    Mas é quase como se o corpo tivesse originado essa resposta engenhosa mas não conseguisse de fato controlá-la. & \verb|B2| & \verb|But it's almost as if the body has originated this ingenious response, but can't quite control it.| & \verb|But it's almost as if the body has originated this ingenious response, but can't quite control it.| & \verb|0.5|\\
+    Transformer & 512 & 512 & - & 68.34 \\
+    Transformer w/ Glove & 512 & 512 & - & 75.4 \\
+    Transformer w/ Fast Text & 512 & 512 & - & 76.2 \\
+    Bahdanau RNN & 512 & 512 & - & 53.6 \\
+    Bahdanau RNN w/ Glove & 512 & 512 & - & 56.5 \\
+    Bahdanau RNN w/ Fast Text & 512 & 512 & - & 57.1 \\
     % Artigo & \cite{article-example} & \citet{article-example}\\
     % Relat\'orio & \cite{techreport-example} & \citet{techreport-example}\\
     % Relat\'orio & \cite{techreport-exampleIn} & \citet{techreport-exampleIn}\\
@@ -313,65 +324,77 @@
     \hline
   \end{tabular}}
   \end{table}
-
-  \chapter{Next steps for this dissertation}
   
-  Publish paper at CBIC (30/05) or STIL (TBD)
+%   \section{Qualitative evaluation}
   
-  Preliminary deadline at 10/09/2021
+%   \subsection{Translation metrics with complexity drill down}
   
+%   \begin{table}[h]
+%   \caption{Translation metrics with complexity drill down}
+%   \label{tab:citation}
+%   \centering
+%   {\footnotesize
+%   \begin{tabular}{| p{4cm} | p{1cm} | p{4cm} | p{4cm} | p{1cm}|}
+%     \hline
+%     Hipothesis & \verb|Complexity| & \verb|Reference| & \verb|Translation| & \verb|BLEU|\\
+%     \hline
+%     Eu voei no Força Aérea 2 por oito anos. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|I flew in Air Force Two for eight years.| & \verb|0.8|\\
+%     Não conseguimos produzir algum tipo de combustível mais limpo para cozinhar?. & \verb|B1| & \verb|Can't we make cleaner burning cooking fuels?| & \verb|Can we not make cleaner cooking burn fuels?| & \verb|0.6|\\
+%     Então isso é o que eles fazem. & \verb|A1| & \verb|I flew on Air Force Two for eight years.| & \verb|And so this is what they do.| & \verb|0.7|\\
+%     Mas é quase como se o corpo tivesse originado essa resposta engenhosa mas não conseguisse de fato controlá-la. & \verb|B2| & \verb|But it's almost as if the body has originated this ingenious response, but can't quite control it.| & \verb|But it's almost as if the body has originated this ingenious response, but can't quite control it.| & \verb|0.5|\\
+%     % Artigo & \cite{article-example} & \citet{article-example}\\
+%     % Relat\'orio & \cite{techreport-example} & \citet{techreport-example}\\
+%     % Relat\'orio & \cite{techreport-exampleIn} & \citet{techreport-exampleIn}\\
+%     % Anais de Congresso & \cite{inproceedings-example} &
+%     %   \citet{inproceedings-example}\\
+%     \hline
+%   \end{tabular}}
+%   \end{table}
+
+  \chapter{Next steps for our work}
   
-  Segundo a norma de formata{\c c}\~ao de teses e disserta{\c c}\~oes do
-  Instituto Alberto Luiz Coimbra de P\'os-gradua{\c c}\~ao e Pesquisa de
-  Engenharia (COPPE), toda abreviatura deve ser definida antes de
-  utilizada.\abbrev{COPPE}{Instituto Alberto Luiz Coimbra de P\'os-gradua{\c
-  c}\~ao e Pesquisa de Engenharia}
-
-  Do mesmo modo, \'e imprescind\'ivel definir os s\'imbolos, tal como o
-  conjunto dos n\'umeros reais $\mathbb{R}$ e o conjunto vazio $\emptyset$.
-  \symbl{$\mathbb{R}$}{Conjunto dos n\'umeros reais}
-  \symbl{$\emptyset$}{Conjunto vazio}
-
-  \begin{longquote}
-  Um exemplo de citação longa nas regras da ABNT (4cm de recuo e fonte menor)
-  feita com o ambiente  \verb=longquote= The primary objective of this
-  investigation was to determine the feasibility of detecting corrosion in
-  aluminum Naval aircraft components with neutron radiographic interrogation
-  and the use of standard corrosion penetrameters. Secondary objectives
-  included the determination of the effect of object thickness on image quality,
-  the defining of minimum levels of detectability and a preliminary investigation
-  of a means whereby the degree of corrosion could be quantified with neutron
-  radiographic data.
-  \end{longquote}
-
-  Para ilustrar a completa ades\~ao ao estilo de cita{\c c}\~oes e listagem de
-  refer\^encias bibliogr\'aficas, a Tabela~\ref{tab:citation} apresenta cita{\c
-  c}\~oes de alguns dos trabalhos contidos na norma fornecida pela CPGP da
-  COPPE, utilizando o estilo num\'erico.
-
+  Submit paper for CBIC (30/05) and/or STIL (No date yet) (TBD). Preliminary deadline for dissertation at 23/09/2021.
+  
+  Chronogram table in the next page.
+  
+  \definecolor{maroon}{cmyk}{0,0.87,0.68,0.32}
+  
   \begin{table}[h]
-  \caption{Exemplos de cita{\c c}\~oes utilizando o comando padr\~ao
-    \texttt{\textbackslash cite} do \LaTeX\ e
-    o comando \texttt{\textbackslash citet},
-    fornecido pelo pacote \texttt{natbib}.}
+  \caption{Next steps chronogram}
   \label{tab:citation}
   \centering
   {\footnotesize
-  \begin{tabular}{|c|c|c|}
+  \begin{tabular}{| p{6cm} | p{3.5cm} | p{1.5cm} | p{3.5cm} |}
     \hline
-    Tipo da Publica{\c c}\~ao & \verb|\cite| & \verb|\citet|\\
+    Deliverable & \verb|Start Date| & \verb|Duration| & \verb|End Date|\\
     \hline
-    Livro & \cite{book-example} & \citet{book-example}\\
-    Artigo & \cite{article-example} & \citet{article-example}\\
-    Relat\'orio & \cite{techreport-example} & \citet{techreport-example}\\
-    Relat\'orio & \cite{techreport-exampleIn} & \citet{techreport-exampleIn}\\
-    Anais de Congresso & \cite{inproceedings-example} &
-      \citet{inproceedings-example}\\
-    S\'eries & \cite{incollection-example} & \citet{incollection-example}\\
-    Em Livro & \cite{inbook-example} & \citet{inbook-example}\\
-    Disserta{\c c}\~ao de mestrado & \cite{mastersthesis-example} &
-      \citet{mastersthesis-example}\\
-    Tese de doutorado & \cite{phdthesis-example} & \citet{phdthesis-example}\\
+    Run dataset experiments without subword, embeddings or data augmentation for CBIC paper & \verb|06/05/2021| & \verb|7 days| & \verb|13/05/2021|\\
+    Run dataset experiments with subword and embeddings for CBIC paper & \verb|13/05/2021| & \verb|7 days| & \verb|20/05/2021|\\
+    Implement data augmentation techniques & \verb|13/05/2021| & \verb|7 days| & \verb|20/05/2021|\\
+    Run dataset experiments with data augmentation for CBIC paper & \verb|20/05/2021| & \verb|7 days| & \verb|27/05/2021|\\
+    Review paper to CBIC (if possible to publish) & \verb|20/05/2021| & \verb|7 days| & \verb|27/05/2021|\\
+    Submit paper to CBIC (if possible) & \verb|29/05/2021| & \verb|1 day| & \verb|30/05/2021|\\
+    Properly fill equations and enrich discussion regarding dissertation & \verb|03/06/2021| & \verb|14 days| & \verb|17/06/2021|\\
+    Come up with a formula to analyse whether a training setup will work on a single GPU based on parameters & \verb|17/06/2021| & \verb|21 days| & \verb|08/07/2021|\\
+    \rowcolor{maroon!20} 
+    Dissertation 1st review & \verb|24/06/2021| & \verb|7 days| & \verb|01/07/2021|\\
+    Rethink the set of experiments to dissertation based on presented techniques & \verb|08/07/2021| & \verb|7 days| & \verb|15/07/2021|\\
+    Run dissertation remaining experiments and fill results & \verb|08/07/2021| & \verb|21 days| & \verb|29/07/2021|\\
+    Review, identify gaps and improve dissertation & \verb|15/07/2021| & \verb|14 days| & \verb|29/07/2021|\\
+    \rowcolor{maroon!20} 
+    Dissertation 2nd review & \verb|29/07/2021| & \verb|7 days| & \verb|05/08/2021|\\
+    Write STIL paper & \verb|05/08/2021 (?) (TBD)| & \verb|14 days| & \verb|12/08/2021 (?) (TBD)|\\
+    Run experiments to STIL & \verb|12/08/2021 (?) (TBD)| & \verb|7 days| & \verb|19/08/2021 (?) (TBD)|\\
+    \rowcolor{maroon!20} 
+    Examiner group proposition & \verb|12/08/2021| & \verb|7 days| & \verb|19/08/2021|\\
+    STIL paper review & \verb|19/08/2021 (?) (TBD)| & \verb|7 days| & \verb|26/08/2021 (?) (TBD)|\\
+    Act upon feedbacks given from examiner group & \verb|19/08/2021| & \verb|7 days| & \verb|26/08/2021|\\
+    Submit paper to STIL & \verb|26/08/2021 (?) (TBD)| & \verb|1 day| & \verb|27/08/2021 (?) (TBD)|\\
+    Review, identify gaps and improve dissertation & \verb|26/08/2021| & \verb|21 days| & \verb|16/09/2021|\\
+    \rowcolor{maroon!20} 
+    Dissertation final review & \verb|16/09/2021| & \verb|7 days| & \verb|23/09/2021|\\
+    \rowcolor{maroon!20} 
+    Dissertation presentation & \verb|23/09/2021| & \verb|7 days| & \verb|30/09/2021|\\
     \hline
   \end{tabular}}
   \end{table}
